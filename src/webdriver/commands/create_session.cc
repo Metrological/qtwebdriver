@@ -79,11 +79,14 @@ void CreateSession::ExecutePost(Response* const response) {
 
     if (NULL != required_caps_dict) {
         if (required_caps_dict->GetString(Capabilities::kBrowserStartWindow, &browser_start_window)) {
-            wereRequiredCaps = true;
+            wereRequiredCaps = true;    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+
             FindAndAttachView(session, browser_start_window, &startView);
         } else if (required_caps_dict->GetString(Capabilities::kBrowserClass, &window_class)) {
             wereRequiredCaps = true;
             CreateViewByClassName(session, window_class, &startView);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+
         }
     }
 
@@ -94,9 +97,11 @@ void CreateSession::ExecutePost(Response* const response) {
 
         if (!startView.is_valid()) {
             if (desired_caps_dict->GetString(Capabilities::kBrowserClass, &window_class)) {
-                CreateViewByClassName(session, window_class, &startView);
+     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+               CreateViewByClassName(session, window_class, &startView);
             } else {
-                CreateViewByClassName(session, "", &startView);
+      printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+              CreateViewByClassName(session, "", &startView);
             }
         }
     }

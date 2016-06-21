@@ -16,7 +16,7 @@ in case of attempt to create second session we get exception of "one session onl
 otherwise prev session will be terminated without closing windows and new session can reuse those windows
 
 For browserClass customizer can define some generic classes. In example in default 
-QT extension there is handling of "WidgetView" and "WebView" values for this capability.
+WPE extension there is handling of "WidgetView" and "WebView" values for this capability.
 In this case ViewFactory will create first registered class of related view's type.
 
 Both options can be passed in desired and required capabilities.

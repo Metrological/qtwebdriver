@@ -21,7 +21,7 @@
 
 Hybrid WebDriver(HWD) is library based on Google ChromeDriver and intended
 for automatic testing. At the momemnt, you can use it to test
-many kinds of Qt application - QWidget, QwebView and QQuick1(Qt4) or QQuick2(Qt5) based applications.
+many kinds of Webkit application - Widget, WebView based applications.
 For understanding how to use library, you can use source code of our test application,
 that we created, in order to test HWD.
 If you hadn't used selenium for automatic testing, you may also find this links helpfull:

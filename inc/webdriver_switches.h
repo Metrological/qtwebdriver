@@ -22,7 +22,7 @@ public:
 
     /// \page page_webdriver_switches WD Server switches
     /// - <b>port</b><br>
-    /// The port that QtWebDriver listens on 
+    /// The port that WPEWebDriver listens on 
     /// (default - 9571)
     static const char kPort[];
 
@@ -40,18 +40,18 @@ public:
 
     /// \page page_webdriver_switches WD Server switches
     /// - <b>log-path</b><br>
-    /// The path to use for the QtWebDriver server log
+    /// The path to use for the WPEWebDriver server log
     /// (default - ./webdriver.log)
     static const char kLogPath[];
 
     /// \page page_webdriver_switches WD Server switches
     /// - <b>verbose</b><br>
-    /// If enabled, QtWebDriver will log lots of stuff to stdout/stderr (false by default)
+    /// If enabled, WPEWebDriver will log lots of stuff to stdout/stderr (false by default)
     static const char kVerbose[];
 
     /// \page page_webdriver_switches WD Server switches
     /// - <b>silence</b><br>
-    /// If enabled, QtWebDriver will not log anything to stdout/stderr (false by default)
+    /// If enabled, WPEWebDriver will not log anything to stdout/stderr (false by default)
     static const char kSilence[];
 
     /// \page page_webdriver_switches WD Server switches

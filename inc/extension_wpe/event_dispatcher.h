@@ -17,38 +17,17 @@
 **
 ****************************************************************************/
 
-#include "shutdown_command.h"
-#include <iostream>
-#include "webdriver_server.h"
+#ifndef EVENTDISPATCHER_H
+#define EVENTDISPATCHER_H
 
-namespace webdriver {
 
-ShutdownCommand::ShutdownCommand(const std::vector<std::string> &path_segments,
-                                 const base::DictionaryValue * const parameters)
-                                : Command(path_segments, parameters) {}
-
-ShutdownCommand::~ShutdownCommand() { }
-
-void ShutdownCommand::ExecutePost(Response * const response)
+/// Abstract class which provides interface for event dispatchers
+class EventDispatcher
 {
-    Server *wd_server = Server::GetInstance();
-//    QApplication::quit();
-    wd_server->Stop(true);
-}
+public:
 
-bool ShutdownCommand::DoesPost() const
-{
-    return true;
-}
+    /// Abstract method, should be implemented in descendants
+    virtual bool dispatch(void *event, bool consumed)=0;
+};
 
-bool ShutdownCommand::DoesGet() const
-{
-    return true;
-}
-
-void ShutdownCommand::ExecuteGet(Response * const response)
-{
-    ExecutePost(response);
-}
-
-}
+#endif // EVENTDISPATCHER_H

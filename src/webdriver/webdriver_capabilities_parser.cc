@@ -92,6 +92,7 @@ Error* CapabilitiesParser::Parse() {
         const char* name;
         Parser parser;
     };
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     NameAndParser name_and_parser[] = {
         { Capabilities::kLoggingPrefs, &CapabilitiesParser::ParseLoggingPrefs },
@@ -129,6 +130,7 @@ Error* CapabilitiesParser::Parse() {
             return error;
         }
     }
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     //caps_->caps.reset(dict_->DeepCopy());
 

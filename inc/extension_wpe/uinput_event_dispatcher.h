@@ -17,38 +17,33 @@
 **
 ****************************************************************************/
 
-#include "shutdown_command.h"
-#include <iostream>
-#include "webdriver_server.h"
+#ifndef UINPUT_EVENT_DISPATCHER_H
+#define UINPUT_EVENT_DISPATCHER_H
 
-namespace webdriver {
+#ifdef OS_LINUX
 
-ShutdownCommand::ShutdownCommand(const std::vector<std::string> &path_segments,
-                                 const base::DictionaryValue * const parameters)
-                                : Command(path_segments, parameters) {}
+#include "extension_wpe/event_dispatcher.h"
+#include "extension_wpe/uinput_manager.h"
 
-ShutdownCommand::~ShutdownCommand() { }
-
-void ShutdownCommand::ExecutePost(Response * const response)
+class UInputEventDispatcher : public EventDispatcher
 {
-    Server *wd_server = Server::GetInstance();
-//    QApplication::quit();
-    wd_server->Stop(true);
-}
+public:
+    /// Constructor
+    /// @param manager - pointer to user events manager
+    UInputEventDispatcher(UInputManager *manager);
+    /// Destructor
+    ~UInputEventDispatcher();
 
-bool ShutdownCommand::DoesPost() const
-{
-    return true;
-}
+    /// Dispatch event to user input device
+    /// @param event - pointer to event for dispatching
+    /// @param consumed - flag whether event was consumed by previous dispatchers
+    /// @return true, if event was consumed, else false
+    virtual bool dispatch(void *event, bool consumed);
 
-bool ShutdownCommand::DoesGet() const
-{
-    return true;
-}
+private:
+    UInputManager* _eventManager;
+};
 
-void ShutdownCommand::ExecuteGet(Response * const response)
-{
-    ExecutePost(response);
-}
+#endif // OS_LINUX
 
-}
+#endif // UINPUT_EVENT_DISPATCHER_H

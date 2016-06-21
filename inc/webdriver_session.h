@@ -13,11 +13,11 @@ Valuable information stored in Session:
 - running context for all operations.
 
 <h2>Running context</h2>
-Most operations on views can be performed on separated thread(ie QT UI thread).
+Most operations on views can be performed on separated thread(ie UI thread).
 For this purpose Session has RunSessionTask() method. And custom runnnig context 
 can be added with webdriver::ViewRunner class:
 \code
-webdriver::ViewRunner::RegisterCustomRunner<webdriver::QViewRunner>();
+webdriver::ViewRunner::RegisterCustomRunner<webdriver::ViewRunner>();
 \endcode
 
 \code
@@ -36,7 +36,7 @@ There are two methods - PostInit() and BeforeTerminate(). These methods
 automatically included in session's init/terminate sequence. Customizer 
 can implement subclass of SessionLifeCycleActions and register it.
 \code
-webdriver::SessionLifeCycleActions::RegisterCustomLifeCycleActions<webdriver::QSessionLifeCycleActions>();
+webdriver::SessionLifeCycleActions::RegisterCustomLifeCycleActions<webdriver::SessionLifeCycleActions>();
 \endcode
 Beside capabilities handling there can be any other actions to be run on 
 session's create or session's terminate.

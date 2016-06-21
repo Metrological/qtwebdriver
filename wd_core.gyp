@@ -79,7 +79,8 @@
         'src/webdriver/url_command_wrapper.cc',
         'src/webdriver/versioninfo.cc',
         'src/webdriver/webdriver_version.cc',
-        'src/third_party/pugixml/pugixml.cpp'
+        'src/third_party/pugixml/pugixml.cpp',
+        'src/third_party/mongoose/mongoose.c'
       ],
 
       'conditions': [

@@ -71,8 +71,9 @@ Session::~Session() {
 bool Session::InitActualCapabilities() {
     // Standard capabilities defined at
     // http://code.google.com/p/selenium/wiki/JsonWireProtocol#Capabilities_JSON_Object
-    capabilities_.caps->SetString(Capabilities::kBrowserName, "QtWebkit");
-    // TODO: get version of QT webkit?
+    capabilities_.caps->SetString(Capabilities::kBrowserName, "WPEWebkit");
+    printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
+    // TODO: get version of WPE webkit?
     //capabilities_value->SetString("version", session->GetBrowserVersion());
 
     capabilities_.caps->SetString(Capabilities::kPlatform, base::SysInfo::OperatingSystemName());
@@ -115,6 +116,8 @@ bool Session::InitActualCapabilities() {
 }
 
 bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilities_dict) {
+    printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
+
     if (!CheckRequiredPlatform(capabilities_dict))
         return false;
 
@@ -169,6 +172,7 @@ bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilitie
 bool Session::CheckRequiredBrowser(const base::DictionaryValue* capabilities_dict) {
     std::string required_browser;
     std::string actual_browser;
+    printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
 
     if (capabilities_dict->GetString(Capabilities::kBrowserName, &required_browser)) {
         capabilities_.caps->GetString(Capabilities::kBrowserName, &actual_browser);
@@ -260,6 +264,7 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
         delete this;
         return new Error(kUnknownError, "Cannot start session thread");
     }
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     if (!temp_dir_.CreateUniqueTempDir()) {
         delete this;
@@ -284,10 +289,12 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
 
         if (!CheckRequiredCapabilities(required_capabilities_dict)) {
             logger_.Log(kWarningLogLevel, "Required caps check failed.");
-            delete this;
+     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+           delete this;
             return new Error(kUnknownError, "Required caps check failed.");
         }
     }
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     CapabilitiesParser parser(desired_capabilities_dict, logger_, &capabilities_);
     Error* error = parser.Parse();
@@ -304,6 +311,7 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
 
     if (error)
         Terminate();
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     return error;
 }
@@ -564,8 +572,6 @@ void Session::RemoveElement(const ViewId& viewId, const ElementId& elementId) {
 void Session::RunClosureOnSessionThread(const base::Closure& task,
                                         base::WaitableEvent* done_event) {
     view_runner_->RunClosure(task, done_event);
-//    QMetaObject::invokeMethod(&qtask, "runTask", Qt::BlockingQueuedConnection, Q_ARG(const base::Closure&, task));
-//    done_event->Signal();
 }
 
 

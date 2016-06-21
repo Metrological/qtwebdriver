@@ -17,38 +17,34 @@
 **
 ****************************************************************************/
 
-#include "shutdown_command.h"
-#include <iostream>
-#include "webdriver_server.h"
+#include "build/build_config.h"
+#include "extension_wpe/uinput_event_dispatcher.h"
 
-namespace webdriver {
+#if defined(OS_LINUX)
 
-ShutdownCommand::ShutdownCommand(const std::vector<std::string> &path_segments,
-                                 const base::DictionaryValue * const parameters)
-                                : Command(path_segments, parameters) {}
-
-ShutdownCommand::~ShutdownCommand() { }
-
-void ShutdownCommand::ExecutePost(Response * const response)
+UInputEventDispatcher::UInputEventDispatcher(UInputManager *manager)
+    : _eventManager(manager)
 {
-    Server *wd_server = Server::GetInstance();
-//    QApplication::quit();
-    wd_server->Stop(true);
 }
 
-bool ShutdownCommand::DoesPost() const
+UInputEventDispatcher::~UInputEventDispatcher()
 {
-    return true;
 }
 
-bool ShutdownCommand::DoesGet() const
+bool UInputEventDispatcher::dispatch(void *event, bool consumed)
 {
-    return true;
+    if (consumed)
+        return false;
+
+    void *keyEvent;// = dynamic_cast<void*>(event);
+    if(NULL != keyEvent)
+    {
+        _eventManager->injectKeyEvent(keyEvent);
+
+        return true;
+    }
+
+    return false;
 }
 
-void ShutdownCommand::ExecuteGet(Response * const response)
-{
-    ExecutePost(response);
-}
-
-}
+#endif // OS_LINUX
