@@ -21,10 +21,11 @@
 
 #if defined(OS_LINUX)
 
-#include "uinput_manager.h"
+#include "extension_qt/uinput_manager.h"
 
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include <QtCore/qnamespace.h>
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -105,7 +106,7 @@ bool UInputManager::registerUinputDevice()
     return true;
 }
 
-int UInputManager::injectKeyEvent(Void* event)
+int UInputManager::injectKeyEvent(QKeyEvent *event)
 {
     struct input_event ev;
     int res = -1;
@@ -114,7 +115,7 @@ int UInputManager::injectKeyEvent(Void* event)
 
     gettimeofday(&(ev.time), NULL);
 
-/*    if (QKeyEvent::KeyPress == event->type())
+    if (QKeyEvent::KeyPress == event->type())
     {
         ev.value = 1;
     }
@@ -122,7 +123,6 @@ int UInputManager::injectKeyEvent(Void* event)
     {
         ev.value = 0;
     }
-*/
     printf("#### Key code: %d\n", event->key());
     printf("#### Key text: %s, modifiers: %d\n", event->text().toStdString().c_str(), (int)event->modifiers());
     int key_text = event->text().toStdString().c_str()[0];
@@ -144,12 +144,12 @@ int UInputManager::injectKeyEvent(Void* event)
     ev.code = lookup_code(event->key());
 
     res = write(_deviceDescriptor, &ev, sizeof(ev));
-/*    _logger->Log(kInfoLogLevel, std::string("#### Write event time: ") +
+    _logger->Log(kInfoLogLevel, std::string("#### Write event time: ") +
                  QString::number(ev.time.tv_sec).toStdString() + std::string(".") +
                  QString::number(ev.time.tv_usec).toStdString() + std::string(", res: ") +
                  QString::number(res).toStdString() + std::string(", errno: ") +
                  QString::number(errno).toStdString() );
-*/
+
     ev.type = EV_SYN;
     ev.code = SYN_REPORT;
     ev.value = 0;
@@ -220,7 +220,6 @@ int UInputManager::injectSynEvent()
 static int lookup_code(int keysym) {
 
     switch(keysym) {
-#if 0
     case Qt::Key_Escape:	return KEY_ESC;
     case Qt::Key_1:         return KEY_1;
     case Qt::Key_2:         return KEY_2;
@@ -323,7 +322,7 @@ static int lookup_code(int keysym) {
     case Qt::Key_Delete:	return KEY_DELETE;
     case Qt::Key_Pause:     return KEY_PAUSE;
     case Qt::Key_Meta:      return KEY_LEFTMETA;
-#endif
+
     default:		return keysym;
     }
 }
