@@ -29,15 +29,19 @@ private:
     DISALLOW_COPY_AND_ASSIGN(WpeViewCmdExecutorCreator);
 };	
 
+#define WPE_NOT_SUPPORTED_IMPL      {printf("%s:%d :%s :Not supported\n", __FILE__, __LINE__, __FUNCTION__);*error = new Error(kCommandNotSupported, "Current view doesnt support this command.");}
+
+#define WPE_STUB_IMPL      {printf("%s:%d :%s :Stub\n", __FILE__, __LINE__, __FUNCTION__);}
+
 class WpeViewCmdExecutor : public ViewCmdExecutor {
 public:
     explicit WpeViewCmdExecutor(Session* session, ViewId viewId);
     virtual ~WpeViewCmdExecutor();
 
     virtual void CanHandleUrl(const std::string& url, bool* can, Error **error);
-    virtual void GoForward(Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GoBack(Error** error) NOT_SUPPORTED_IMPL;
-    virtual void Reload(Error** error) NOT_SUPPORTED_IMPL;
+    virtual void GoForward(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GoBack(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void Reload(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetSource(std::string* source, Error** error);
     virtual void SendKeys(const ElementId& element, const string16& keys, Error** error);
     virtual void GetElementScreenShot(const ElementId& element, std::string* png, Error** error);
@@ -58,62 +62,78 @@ public:
     virtual void GetElementLocation(const ElementId& element, Point* location, Error** error);
     virtual void GetElementLocationInView(const ElementId& element, Point* location, Error** error);
     virtual void GetElementTagName(const ElementId& element, std::string* tag_name, Error** error);
-    virtual void IsOptionElementSelected(const ElementId& element, bool* is_selected, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetOptionElementSelected(const ElementId& element, bool selected, Error** error) NOT_SUPPORTED_IMPL;
+    virtual void IsOptionElementSelected(const ElementId& element, bool* is_selected, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetOptionElementSelected(const ElementId& element, bool selected, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetElementSize(const ElementId& element, Size* size, Error** error);
-    virtual void ElementSubmit(const ElementId& element, Error** error) NOT_SUPPORTED_IMPL;
+    virtual void ElementSubmit(const ElementId& element, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetElementText(const ElementId& element, std::string* element_text, Error** error);
-    virtual void GetElementCssProperty(const ElementId& element, const std::string& property, base::Value** value, Error** error) NOT_SUPPORTED_IMPL;
+    virtual void GetElementCssProperty(const ElementId& element, const std::string& property, base::Value** value, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void FindElements(const ElementId& root_element, const std::string& locator, const std::string& query, std::vector<ElementId>* elements, Error** error);
     virtual void ActiveElement(ElementId* element, Error** error);
-    virtual void SwitchToFrameWithNameOrId(const std::string& name_or_id, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SwitchToFrameWithIndex(int index, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SwitchToFrameWithElement(const ElementId& element, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SwitchToTopFrame(Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SwitchToTopFrameIfCurrentFrameInvalid(Error** error) NOT_SUPPORTED_IMPL;
+    virtual void SwitchToFrameWithNameOrId(const std::string& name_or_id, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SwitchToFrameWithIndex(int index, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SwitchToFrameWithElement(const ElementId& element, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SwitchToTopFrame(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SwitchToTopFrameIfCurrentFrameInvalid(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void NavigateToURL(const std::string& url, bool sync, Error** error);
     virtual void GetURL(std::string* url, Error** error);
     virtual void ExecuteScript(const std::string& script, const base::ListValue* const args, base::Value** value, Error** error);
-    virtual void ExecuteAsyncScript(const std::string& script, const base::ListValue* const args, base::Value** value, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetAppCacheStatus(int* status, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetCookies(const std::string& url, base::ListValue** cookies, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetCookie(const std::string& url, base::DictionaryValue* cookie_dict, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void DeleteCookie(const std::string& url, const std::string& cookie_name, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetStorageKeys(StorageType type, base::ListValue** keys, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetStorageItem(StorageType type, const std::string& key, const std::string& value, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void ClearStorage(StorageType type, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetStorageItem(StorageType type, const std::string& key, std::string* value, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void RemoveStorageItem(StorageType type, const std::string& key, std::string* value, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetStorageSize(StorageType type, int* size, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetGeoLocation(base::DictionaryValue** geolocation, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetGeoLocation(const base::DictionaryValue* geolocation, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void TouchClick(const ElementId& element, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchDoubleClick(const ElementId& element, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchDown(const int &x, const int &y, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchUp(const int &x, const int &y, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchMove(const int &x, const int &y, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchLongClick(const ElementId& element, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchScroll(const int &xoffset, const int &yoffset, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchScroll(const ElementId &element, const int &xoffset, const int &yoffset, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchFlick(const int &xSpeed, const int &ySpeed, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void TouchFlick(const ElementId &element, const int &xoffset, const int &yoffset, const int &speed, Error **error) NOT_SUPPORTED_IMPL;
-    virtual void GetPlayerState(const ElementId& element, PlayerState*, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetPlayerState(const ElementId& element, PlayerState, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetPlayerVolume(const ElementId& element, double*, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetPlayerVolume(const ElementId& element, double, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void GetPlayingPosition(const ElementId& element, double*, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetPlayingPosition(const ElementId& element, double, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void SetMute(const ElementId& element, bool, Error**error) NOT_SUPPORTED_IMPL;
-    virtual void GetMute(const ElementId& element, bool*, Error**error) NOT_SUPPORTED_IMPL;
-    virtual void SetPlaybackSpeed(const ElementId& element, double, Error**error) NOT_SUPPORTED_IMPL;;
-    virtual void GetPlaybackSpeed(const ElementId& element, double*, Error**error) NOT_SUPPORTED_IMPL;;
+    virtual void ExecuteAsyncScript(const std::string& script, const base::ListValue* const args, base::Value** value, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetAppCacheStatus(int* status, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetCookies(const std::string& url, base::ListValue** cookies, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetCookie(const std::string& url, base::DictionaryValue* cookie_dict, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void DeleteCookie(const std::string& url, const std::string& cookie_name, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetStorageKeys(StorageType type, base::ListValue** keys, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetStorageItem(StorageType type, const std::string& key, const std::string& value, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void ClearStorage(StorageType type, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetStorageItem(StorageType type, const std::string& key, std::string* value, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void RemoveStorageItem(StorageType type, const std::string& key, std::string* value, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetStorageSize(StorageType type, int* size, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetGeoLocation(base::DictionaryValue** geolocation, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetGeoLocation(const base::DictionaryValue* geolocation, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchClick(const ElementId& element, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchDoubleClick(const ElementId& element, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchDown(const int &x, const int &y, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchUp(const int &x, const int &y, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchMove(const int &x, const int &y, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchLongClick(const ElementId& element, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchScroll(const int &xoffset, const int &yoffset, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchScroll(const ElementId &element, const int &xoffset, const int &yoffset, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchFlick(const int &xSpeed, const int &ySpeed, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchFlick(const ElementId &element, const int &xoffset, const int &yoffset, const int &speed, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetPlayerState(const ElementId& element, PlayerState*, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetPlayerState(const ElementId& element, PlayerState, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetPlayerVolume(const ElementId& element, double*, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetPlayerVolume(const ElementId& element, double, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetPlayingPosition(const ElementId& element, double*, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetPlayingPosition(const ElementId& element, double, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetMute(const ElementId& element, bool, Error**error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetMute(const ElementId& element, bool*, Error**error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetPlaybackSpeed(const ElementId& element, double, Error**error) WPE_NOT_SUPPORTED_IMPL;;
+    virtual void GetPlaybackSpeed(const ElementId& element, double*, Error**error) WPE_NOT_SUPPORTED_IMPL;;
     virtual void VisualizerSource(std::string* source, Error** error);
-    virtual void VisualizerShowPoint(Error** error) NOT_SUPPORTED_IMPL;
-    virtual void TouchPinchZoom(const ElementId &element, const double &scale, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void TouchPinchRotate(const ElementId &element, const int &angle, Error** error) NOT_SUPPORTED_IMPL;
+    virtual void VisualizerShowPoint(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchPinchZoom(const ElementId &element, const double &scale, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void TouchPinchRotate(const ElementId &element, const int &angle, Error** error) WPE_NOT_SUPPORTED_IMPL;
 
-    virtual void SetOnline(bool, Error** error) NOT_SUPPORTED_IMPL;
-    virtual void IsOnline(bool*, Error** error) NOT_SUPPORTED_IMPL;
+    virtual void SetOnline(bool, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void IsOnline(bool*, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetTitle(std::string* title, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetWindowName(std::string* name, Error ** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetBounds(Rect *bounds, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetBounds(const Rect& bounds, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void Maximize(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetScreenShot(std::string* png, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SendKeys(const string16& keys, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void FindElement(const ElementId& root_element, const std::string& locator, const std::string& query, ElementId* element, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void Close(Error** error)  WPE_NOT_SUPPORTED_IMPL;
+    virtual void SwitchTo(Error** error)  WPE_STUB_IMPL;
+    virtual void GetAlertMessage(std::string* text, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetAlertPromptText(const std::string& alert_prompt_text, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void AcceptOrDismissAlert(bool accept, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void SetOrientation(const std::string &orientation, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void GetOrientation(std::string *orientation, Error **error) WPE_NOT_SUPPORTED_IMPL;
+    
 
 protected:
     void* getView(const ViewId& viewId, Error** error);

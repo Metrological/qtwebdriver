@@ -14,6 +14,7 @@
 #include "extension_wpe/wpe_view_executor.h"
 
 #include "webdriver_switches.h"
+#include <glib.h>
 
 void PrintVersion();
 void PrintHelp();
@@ -21,6 +22,7 @@ void InitUInputClient();
 
 int main(int argc, char *argv[])
 {
+    GMainLoop* loop = g_main_loop_new(NULL, FALSE);
     base::AtExitManager exit;
     CommandLine cmd_line(CommandLine::NO_PROGRAM);
     cmd_line.InitFromArgv(argc, argv);
@@ -59,7 +61,8 @@ int main(int argc, char *argv[])
     }
     std::cout << "webdriver server started..." << std::endl;
 
-    while(1);
+    g_main_loop_run(loop);
+    g_main_loop_unref(loop);
     return 0; 
 }
 

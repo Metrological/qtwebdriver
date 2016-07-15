@@ -12,7 +12,7 @@ namespace webdriver {
 class WpeViewCreator : public ViewCreator {
 public:
     WpeViewCreator();
-    virtual ~WpeViewCreator(){}
+    virtual ~WpeViewCreator();
 
     virtual bool CreateViewByClassName(const Logger& logger, const std::string& className,
                                        const Point* position, const Size* size, ViewHandle** view) const;
@@ -21,7 +21,6 @@ public:
                                   const Point* position, const Size* size, ViewHandle** view) const;
 
 private:
-
     DISALLOW_COPY_AND_ASSIGN(WpeViewCreator);
 };
 

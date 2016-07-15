@@ -20,7 +20,7 @@ WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
 
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    return NULL;
+    return new WpeViewCmdExecutor(session, viewId);
 }
 
 bool WpeViewCmdExecutorCreator::CanHandleView(Session* session, ViewId viewId, ViewType* viewType) const {

@@ -80,7 +80,8 @@
         'src/webdriver/versioninfo.cc',
         'src/webdriver/webdriver_version.cc',
         'src/third_party/pugixml/pugixml.cpp',
-        'src/third_party/mongoose/mongoose.c'
+        'src/third_party/mongoose/mongoose.c',
+        'src/webdriver_wrapper/webdriver_wrapper.cc',
       ],
 
       'conditions': [

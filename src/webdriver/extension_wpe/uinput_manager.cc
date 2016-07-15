@@ -58,7 +58,6 @@ bool UInputManager::registerUinputDevice()
     struct uinput_user_dev uidev;
 
     _deviceDescriptor = open("/dev/uinput", O_WRONLY | O_NONBLOCK | O_CREAT | O_NDELAY, S_IREAD | S_IWRITE);
-    //_logger->Log(kInfoLogLevel, std::string("#### Device descriptor: ") + QString::number(_deviceDescriptor).toStdString());
 
     if (0 > _deviceDescriptor)
     {
@@ -114,17 +113,6 @@ int UInputManager::injectKeyEvent(void* event)
 
     gettimeofday(&(ev.time), NULL);
 
-/*    if (QKeyEvent::KeyPress == event->type())
-    {
-        ev.value = 1;
-    }
-    else if (QKeyEvent::KeyRelease == event->type())
-    {
-        ev.value = 0;
-    }
-*/
-//    printf("#### Key code: %d\n", event->key());
-//    printf("#### Key text: %s, modifiers: %d\n", event->text().toStdString().c_str(), (int)event->modifiers());
     int key_text;// = event->text().toStdString().c_str()[0];
 
     // Check keyCode for capital letters
@@ -144,12 +132,6 @@ int UInputManager::injectKeyEvent(void* event)
     ev.code = 0;//lookup_code(event->key());
 
     res = write(_deviceDescriptor, &ev, sizeof(ev));
-/*    _logger->Log(kInfoLogLevel, std::string("#### Write event time: ") +
-                 QString::number(ev.time.tv_sec).toStdString() + std::string(".") +
-                 QString::number(ev.time.tv_usec).toStdString() + std::string(", res: ") +
-                 QString::number(res).toStdString() + std::string(", errno: ") +
-                 QString::number(errno).toStdString() );
-*/
     ev.type = EV_SYN;
     ev.code = SYN_REPORT;
     ev.value = 0;

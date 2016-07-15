@@ -12,7 +12,7 @@
     # TODO: review include_dirs
     'include_dirs': [
       'inc/',
-      ' -I<(WPE_INC_PATH)',
+      '<(WPE_INC_PATH)',
       '<(INTERMEDIATE_DIR)',
     ],
 
@@ -54,7 +54,8 @@
       'dependencies': [
         'base.gyp:chromium_base',
         'wd_core.gyp:WebDriver_core',
-        'wd_ext_wpe.gyp:WebDriver_extension_wpe_base',
+        'wd_ext_wpe.gyp:WebDriver_wpe_driver',
+        'wd_ext_wpe.gyp:WebDriver_extension_wpe_base_shared',
       ],
 
       'defines': [ 'WD_TEST_ENABLE_WEB_VIEW=1' ],
