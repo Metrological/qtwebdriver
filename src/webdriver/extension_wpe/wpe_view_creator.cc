@@ -13,28 +13,31 @@ WPEDriver *WpeDriver;
 
 WpeViewCreator::WpeViewCreator()
 {
-    WpeDriver = new WPEDriver();
+//    WpeDriver = new WPEDriver();
 }
 
 WpeViewCreator::~WpeViewCreator()
 {
-    delete WpeDriver;
+ //   delete WpeDriver;
 }
 bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::string& className,
                                            const Point* position, const Size* size, ViewHandle** view) const {
     printf("%s:%s:%d Enter : requested class name : %s\n", __FILE__, __func__, __LINE__, className.c_str());
     void *WpeHandle;
-  
-    int ret = WpeDriver->WpeCreateView(&WpeHandle, "http://www.google.com");
-    if ( 0 != ret )
-    {
-		printf("%s:%s:%d  : WebKitCreateView failed \n", __FILE__, __func__, __LINE__);
-		// view was not created
-		return false;
+
+    if (className.empty() || className == "WpeWebView") {  
+        int ret = WpeDriver->WpeCreateView(&WpeHandle, "http://www.google.com");
+        if (0 != ret) {
+            printf("%s:%s:%d  : WebKitCreateView failed \n", __FILE__, __func__, __LINE__);
+            // view was not created
+            return false;
+        }
+    
+        printf("%s:%s:%d  : WebKitCreateView created \n", __FILE__, __func__, __LINE__);
+        *view = new WpeViewHandle((void*) WpeHandle);
+        return true;
     }
-    printf("%s:%s:%d  : WebKitCreateView created \n", __FILE__, __func__, __LINE__);
-    *view = new WpeViewHandle((void*) WpeHandle);
-    return true;
+    return false;
 }
 
 bool WpeViewCreator::CreateViewForUrl(const Logger& logger, const std::string& url,

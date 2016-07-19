@@ -4,11 +4,26 @@
 #include "webdriver_logging.h"
 
 #include "extension_wpe/wpe_view_handle.h"
+#include "extension_wpe/wpe_driver/wpe_driver.h"
 
 namespace webdriver {
 
 void WpeViewEnumeratorImpl::EnumerateViews(Session* session, std::set<ViewId>* views) const {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    ViewHandlePtr handle(new WpeViewHandle(WpeDriver->GetViewHandle ()));
+    if (handle != NULL) {
+        ViewId viewId = session->GetViewForHandle(handle);
+        if (!viewId.is_valid()) {
+                if (session->AddNewView(handle, &viewId))  {
+                    session->logger().Log(kInfoLogLevel,
+                        "WpeViewEnumerator found new view("+viewId.id()+")");
+                }
+            }
+            if (viewId.is_valid()) {
+                views->insert(viewId);
+            }
+        }
+
 }
 
 } // namespace webdriver

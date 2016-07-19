@@ -12,6 +12,7 @@
 #include "extension_wpe/wpe_view_creator.h"
 #include "extension_wpe/wpe_view_enumerator.h"
 #include "extension_wpe/wpe_view_executor.h"
+#include "extension_wpe/wpe_driver/wpe_driver.h"
 
 #include "webdriver_switches.h"
 #include <glib.h>
@@ -20,6 +21,8 @@ void PrintVersion();
 void PrintHelp();
 void InitUInputClient();
 
+WPEDriver* WpeDriver = new WPEDriver();
+
 int main(int argc, char *argv[])
 {
     GMainLoop* loop = g_main_loop_new(NULL, FALSE);
@@ -27,9 +30,10 @@ int main(int argc, char *argv[])
     CommandLine cmd_line(CommandLine::NO_PROGRAM);
     cmd_line.InitFromArgv(argc, argv);
 
-    // WPE Webkit View
+    // Create WPE Driver instance
+       // WPE Webkit View
     webdriver::ViewCreator* wpeViewCreator = new webdriver::WpeViewCreator();
-    wpeViewCreator->RegisterViewClass<WpeWidget>("WpeWidget");
+//    wpeViewCreator->RegisterViewClass<WpeWidget>("WpeWidget");
     webdriver::ViewFactory::GetInstance()->AddViewCreator(wpeViewCreator);
 
     webdriver::ViewEnumerator::AddViewEnumeratorImpl(new webdriver::WpeViewEnumeratorImpl());
