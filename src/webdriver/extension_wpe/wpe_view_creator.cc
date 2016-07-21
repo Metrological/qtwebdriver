@@ -44,8 +44,11 @@ bool WpeViewCreator::CreateViewForUrl(const Logger& logger, const std::string& u
                                           const Point* position, const Size* size, ViewHandle** view) const {
     printf("\nInside %s:%s:%d\n", __FILE__, __func__, __LINE__);
 
-    if (!WpeViewUtil::isUrlSupported(url))
+    Error* tmp_err = NULL;
+    if (!WpeViewUtil::isUrlSupported(url, &tmp_err )) {
+        if (tmp_err) delete tmp_err;
         return false;
+    }
 
     std::string className = WpeViewUtil::extractClassName(url);
 

@@ -3,8 +3,9 @@
 
 #include <string>
 
-//#include "common_util.h"
+#include "webdriver_basic_types.h"
 #include "webdriver_view_id.h"
+#include "webdriver_error.h"
 
 namespace webdriver {
 
@@ -12,10 +13,11 @@ class Session;
 
 class WpeViewUtil {
 public:
-    static bool isUrlSupported(const std::string& url);
+    static void* getWpeView(Session* session, const ViewId& viewId);
+    static bool isUrlSupported(void* pWpeView, const std::string& url, Error  **error);
+    static bool isUrlSupported(const std::string& url, Error  **error);
     static std::string extractClassName(const std::string& url);
     static std::string makeUrlByClassName(const std::string& className);
-    static void* getView(Session* session, const ViewId& viewId);
 
 private:
     static const char url_protocol[];

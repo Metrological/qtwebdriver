@@ -7,8 +7,16 @@
 
 #include "webdriver_session.h"
 #include "webdriver_view_factory.h"
+#include "wpe_view_util.h"
 
 namespace webdriver {
+
+#define CHECK_VIEW_EXISTANCE    \
+    if (NULL == view_) { \
+        session_->logger().Log(kWarningLogLevel, "checkView - no such web view"); \
+        *error = new Error(kNoSuchWindow); \
+        return; \
+    } 
 
 WpeWidget::WpeWidget() {}
 WpeWidget::~WpeWidget() {}
@@ -19,23 +27,39 @@ WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
 	: ViewCmdExecutorCreator() { printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); }
 
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
+    void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    return new WpeViewCmdExecutor(session, viewId);
+
+    if (NULL != pWpeView) {
+        session->logger().Log(kFineLogLevel, "Web executor for view("+viewId.id()+")");    
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        return new WpeViewCmdExecutor(session, viewId);
+    }
+    return NULL;
 }
 
 bool WpeViewCmdExecutorCreator::CanHandleView(Session* session, ViewId viewId, ViewType* viewType) const {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
+    if (NULL != pWpeView) {
+        if (NULL != viewType) *viewType = WPE_VIEW_TYPE;  
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+       return true;
+    }
+
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     return false;
 }
 
 std::string WpeViewCmdExecutorCreator::GetViewTypeName() const {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    return "qml";
+    return "html";
 }
 
 WpeViewCmdExecutor::WpeViewCmdExecutor(Session* session, ViewId viewId) 
     : ViewCmdExecutor (session, viewId) {
-     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    view_ = WpeViewUtil::getWpeView(session_, viewId);
 }
 
 WpeViewCmdExecutor::~WpeViewCmdExecutor() {
@@ -47,6 +71,12 @@ void* WpeViewCmdExecutor::getElement(const ElementId &element, Error** error) {
 }
 
 void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error **error) {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    CHECK_VIEW_EXISTANCE
+    *can = WpeViewUtil::isUrlSupported(view_, url, error);
+}
+
+void WpeViewCmdExecutor::Reload(Error **error) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 

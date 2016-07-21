@@ -28,7 +28,7 @@ else
 fi
 
 OUT_STATIC_LIB_FILES="libchromium_base.a libWebDriver_core.a libWebDriver_extension_wpe_base.a"
-OUT_SHARED_LIB_FILES="libchromium_base.so libWebDriver_core.so libWebDriver_extension_wpe_base.so libWebDriver_wpe_driver.so"
+OUT_SHARED_LIB_FILES="libchromium_base.so libWebDriver_core.so libWebDriver_extension_wpe_base.so libWebDriver_wpe_driver.so libWebDriver_wpe_driver_injected_bundle.so"
 OUT_BIN_FILES="WebDriver WebDriver_noWebkit WebDriver_noWebkit_sharedLibs"
 GYP=`which gyp`
 

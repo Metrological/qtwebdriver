@@ -580,7 +580,7 @@ ListValue* Server::ListCommandSupportedMethods(const Command& command) {
 
 int Server::InitMongooseOptions() {
     std::string port = "9517";
-    std::string root = "./web";
+    std::string root = "/usr/share/web";
     int http_threads = 4;
 
     if (options_->HasSwitch(webdriver::Switches::kPort))

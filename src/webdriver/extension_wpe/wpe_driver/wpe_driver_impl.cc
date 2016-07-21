@@ -8,11 +8,11 @@ WPEDriverImpl::WPEDriverImpl()
 
 WPEDriverImpl::~WPEDriverImpl()
 {
-    WKRelease(view);
-    WKRelease(pageConfiguration);
-    WKRelease(pageGroup);
-    WKRelease(context);
-    WKRelease(preferences);
+    WKRelease(view_);
+    WKRelease(pageConfiguration_);
+    WKRelease(pageGroup_);
+    WKRelease(context_);
+    WKRelease(preferences_);
 }
 
 WKPageNavigationClientV0 s_navigationClient = {
@@ -80,12 +80,11 @@ WKViewClientV0 s_viewClient = {
 };
 
 
-int WPEDriverImpl::CreateView ( const char* url)
-{
-    printf("\nInside %s:%s:%d Launching WKView\n", __FILE__, __func__, __LINE__);
+int WPEDriverImpl::CreateView ( const char* url) {
 
+    printf("\nInside %s:%s:%d Launching WKView\n", __FILE__, __func__, __LINE__);
     auto contextConfiguration = WKContextConfigurationCreate();
-    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/lib/libWPEInjectedBundle.so");
+    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/lib/libWebDriver_wpe_driver_injected_bundle.so");
     WKContextConfigurationSetInjectedBundlePath(contextConfiguration, injectedBundlePath);
 
     gchar *wpeStoragePath = g_build_filename(g_get_user_cache_dir(), "wpe", "local-storage", nullptr);
@@ -102,47 +101,56 @@ int WPEDriverImpl::CreateView ( const char* url)
 
     WKRelease(injectedBundlePath);
 
-    context = WKContextCreateWithConfiguration(contextConfiguration);
+    context_ = WKContextCreateWithConfiguration(contextConfiguration);
     WKRelease(contextConfiguration);
 
     auto pageGroupIdentifier = WKStringCreateWithUTF8CString("WPEPageGroup");
-    pageGroup = WKPageGroupCreateWithIdentifier(pageGroupIdentifier);
+    pageGroup_ = WKPageGroupCreateWithIdentifier(pageGroupIdentifier);
     WKRelease(pageGroupIdentifier);
 
-    preferences = WKPreferencesCreate();
+    preferences_ = WKPreferencesCreate();
     // Allow mixed content.
-    WKPreferencesSetAllowRunningOfInsecureContent(preferences, true);
-    WKPreferencesSetAllowDisplayOfInsecureContent(preferences, true);
+    WKPreferencesSetAllowRunningOfInsecureContent(preferences_, true);
+    WKPreferencesSetAllowDisplayOfInsecureContent(preferences_, true);
 
     // By default allow console log messages to system console reporting.
     if (!g_getenv("WPE_SHELL_DISABLE_CONSOLE_LOG"))
-      WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(preferences, true);
+      WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(preferences_, true);
 
-    WKPageGroupSetPreferences(pageGroup, preferences);
+    WKPageGroupSetPreferences(pageGroup_, preferences_);
 
-    pageConfiguration  = WKPageConfigurationCreate();
-    WKPageConfigurationSetContext(pageConfiguration, context);
-    WKPageConfigurationSetPageGroup(pageConfiguration, pageGroup);
-    WKPreferencesSetFullScreenEnabled(preferences, true);
+    pageConfiguration_  = WKPageConfigurationCreate();
+    WKPageConfigurationSetContext(pageConfiguration_, context_);
+    WKPageConfigurationSetPageGroup(pageConfiguration_, pageGroup_);
+    WKPreferencesSetFullScreenEnabled(preferences_, true);
 
     if (!!g_getenv("WPE_SHELL_COOKIE_STORAGE")) {
       gchar *cookieDatabasePath = g_build_filename(g_get_user_cache_dir(), "cookies.db", nullptr);
       auto path = WKStringCreateWithUTF8CString(cookieDatabasePath);
       g_free(cookieDatabasePath);
-      auto cookieManager = WKContextGetCookieManager(context);
+      auto cookieManager = WKContextGetCookieManager(context_);
       WKCookieManagerSetCookiePersistentStorage(cookieManager, path, kWKCookieStorageTypeSQLite);
     }
 
-    view = WKViewCreate(pageConfiguration);
-    WKViewSetViewClient(view, &s_viewClient.base);
+    view_ = WKViewCreate(pageConfiguration_);
+    WKViewSetViewClient(view_, &s_viewClient.base);
 
-    page = WKViewGetPage(view);
-    WKPageSetPageNavigationClient(page, &s_navigationClient.base);
+    page_ = WKViewGetPage(view_);
+    WKPageSetPageNavigationClient(page_, &s_navigationClient.base);
 
     auto shellURL = WKURLCreateWithUTF8CString(url);
-    WKPageLoadURL(page, shellURL);
+    WKPageLoadURL(page_, shellURL);
     WKRelease(shellURL);
     //g_usleep(100*1000000);
     return 0;
+}
+
+bool WPEDriverImpl::isUrlSupported (const std::string& mimeType) {
+    
+    if (NULL != page_) {
+        return true;// (WKPageCanShowMIMEType(page_, mimeType)); TODO enable this once implement mimetype parsing 
+                                                             // support in wpe_view_utils.cc
+    }
+    return false;
 }
 

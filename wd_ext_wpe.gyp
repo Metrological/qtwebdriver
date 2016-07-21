@@ -22,6 +22,18 @@
 
   'targets': [
     {
+      'target_name': 'WebDriver_wpe_driver_injected_bundle',
+      'type': 'shared_library',
+
+      'cflags': [
+        '-std=c++11',
+      ],
+
+      'sources': [
+        'src/webdriver/extension_wpe/wpe_driver/injectedbundle/WpeDriverInjectedBundle.cc',
+      ],
+    },
+    {
       'target_name': 'WebDriver_wpe_driver',
       'type': 'shared_library',
       
@@ -57,6 +69,7 @@
       'product_name': 'WebDriver_extension_wpe_base',
 
       'dependencies': [
+        'WebDriver_wpe_driver_injected_bundle',
         'WebDriver_wpe_driver',
         'WebDriver_extension_wpe_base',
       ],

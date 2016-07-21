@@ -41,7 +41,7 @@ public:
     virtual void CanHandleUrl(const std::string& url, bool* can, Error **error);
     virtual void GoForward(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GoBack(Error** error) WPE_NOT_SUPPORTED_IMPL;
-    virtual void Reload(Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void Reload(Error** error);
     virtual void GetSource(std::string* source, Error** error);
     virtual void SendKeys(const ElementId& element, const string16& keys, Error** error);
     virtual void GetElementScreenShot(const ElementId& element, std::string* png, Error** error);
@@ -145,6 +145,7 @@ protected:
     void moveMouseInternal(void* view, int& point);
     
 private:
+    void* view_;
     DISALLOW_COPY_AND_ASSIGN(WpeViewCmdExecutor);
 };
 
