@@ -1,27 +1,51 @@
 
 
 #include "extension_wpe/wpe_driver/wpe_driver_impl.h"
+#include "extension_wpe/wpe_driver/wpe_driver_impl.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
 WPEDriverImpl *WpeDriverImpl;
 void* WpeHandle = NULL;
 
 WPEDriver::~WPEDriver() {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     WpeHandle = NULL;
     delete WpeDriverImpl;
 }
 
-int WPEDriver::WpeCreateView ( void **handle, const char* url) {
+int WPEDriver::WpeCreateView ( void **handle) {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     WpeDriverImpl = new WPEDriverImpl();
-    WpeDriverImpl->CreateView(url);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    WpeDriverImpl->CreateView();
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     WpeHandle = *handle = WpeDriverImpl;
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     return 0;
 }
 
 void* WPEDriver::GetViewHandle () {
-   return WpeHandle;
+   printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+   if (WpeDriverImpl)
+       return WpeHandle;
+   else
+       return NULL;
 }
 
 bool WPEDriver::isUrlSupported (const std::string& mimeType) {
-    return WpeDriverImpl->isUrlSupported(mimeType);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (WpeDriverImpl)
+        return WpeDriverImpl->isUrlSupported(mimeType);
+    else
+        return false;
+}
+
+void WPEDriver::WpeRemoveView () {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (WpeDriverImpl)
+        WpeDriverImpl->RemoveView();
+    else
+        printf("View already removed\n");
+
+    return;
 }

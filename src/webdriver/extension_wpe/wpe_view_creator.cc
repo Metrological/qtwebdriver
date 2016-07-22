@@ -9,16 +9,17 @@
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
 namespace webdriver {
-WPEDriver *WpeDriver;
+
 
 WpeViewCreator::WpeViewCreator()
 {
-//    WpeDriver = new WPEDriver();
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+
 }
 
 WpeViewCreator::~WpeViewCreator()
 {
- //   delete WpeDriver;
+ 
 }
 bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::string& className,
                                            const Point* position, const Size* size, ViewHandle** view) const {
@@ -26,7 +27,7 @@ bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::stri
     void *WpeHandle;
 
     if (className.empty() || className == "WpeWebView") {  
-        int ret = WpeDriver->WpeCreateView(&WpeHandle, "http://www.google.com");
+        int ret = WpeDriver->WpeCreateView(&WpeHandle);
         if (0 != ret) {
             printf("%s:%s:%d  : WebKitCreateView failed \n", __FILE__, __func__, __LINE__);
             // view was not created

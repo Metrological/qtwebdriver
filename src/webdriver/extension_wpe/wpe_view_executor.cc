@@ -8,6 +8,7 @@
 #include "webdriver_session.h"
 #include "webdriver_view_factory.h"
 #include "wpe_view_util.h"
+#include "extension_wpe/wpe_driver/wpe_driver.h"
 
 namespace webdriver {
 
@@ -209,4 +210,14 @@ void WpeViewCmdExecutor::FindElementsByXpath(void* parent, const std::string &qu
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
+void WpeViewCmdExecutor::Close(Error** error) {
+    CHECK_VIEW_EXISTANCE
+
+    WpeDriver->WpeRemoveView();
+    session_->logger().Log(kInfoLogLevel, "close View("+view_id_.id()+")");
+
+    session_->RemoveView(view_id_);
+
+//    view->close();
+}
 } //namespace webdriver 

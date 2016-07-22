@@ -1,14 +1,14 @@
 #ifndef __WPE_DRIVER_H__
 #define __WPE_DRIVER_H__
-#include <string>
 
 class WPEDriver {
 public:
     WPEDriver(){}
     ~WPEDriver();
-    int WpeCreateView ( void **handle, const char* url);
+    int WpeCreateView ( void **handle);
     void* GetViewHandle ();
     bool isUrlSupported (const std::string& mimeType);
+    void WpeRemoveView ();
 };
 
 extern WPEDriver *WpeDriver;

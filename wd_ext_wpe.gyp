@@ -69,7 +69,6 @@
       'product_name': 'WebDriver_extension_wpe_base',
 
       'dependencies': [
-        'WebDriver_wpe_driver_injected_bundle',
         'WebDriver_wpe_driver',
         'WebDriver_extension_wpe_base',
       ],

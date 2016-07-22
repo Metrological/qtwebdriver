@@ -13,7 +13,6 @@
       'dependencies': [
         'base.gyp:chromium_base',
         'wd_core.gyp:WebDriver_core',
-        'wd_ext_wpe.gyp:WebDriver_wpe_driver_injected_bundle',
         'wd_ext_wpe.gyp:WebDriver_wpe_driver',
         'wd_ext_wpe.gyp:WebDriver_extension_wpe_base'
       ],
