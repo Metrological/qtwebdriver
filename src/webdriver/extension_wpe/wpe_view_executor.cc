@@ -78,6 +78,9 @@ void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error *
 }
 
 void WpeViewCmdExecutor::Reload(Error **error) {
+    CHECK_VIEW_EXISTANCE
+    WpeDriver->WpeReload();
+
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 

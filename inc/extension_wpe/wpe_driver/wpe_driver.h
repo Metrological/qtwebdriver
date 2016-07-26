@@ -8,6 +8,7 @@ public:
     int WpeCreateView ( void **handle);
     void* GetViewHandle ();
     bool isUrlSupported (const std::string& mimeType);
+    void WpeReload();
     void WpeRemoveView ();
 };
 

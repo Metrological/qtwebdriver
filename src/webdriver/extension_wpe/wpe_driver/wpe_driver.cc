@@ -40,6 +40,16 @@ bool WPEDriver::isUrlSupported (const std::string& mimeType) {
         return false;
 }
 
+void WPEDriver::WpeReload () {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (WpeDriverImpl)
+        WpeDriverImpl->Reload();
+    else
+        printf("View doesn't exisit\n");
+
+    return;
+}
+
 void WPEDriver::WpeRemoveView () {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (WpeDriverImpl)

@@ -27,11 +27,12 @@ class WPEDriverImpl {
        pthread_t WpeViewThreadID_;    
        WPEViewStatus  ViewStatus_;       
        
-       WPEDriverImpl();
-       ~WPEDriverImpl();
+       WPEDriverImpl ();
+       ~WPEDriverImpl ();
        int CreateView ();
-       bool isUrlSupported(const std::string& mimeType);
-       static void* WpeRunView(void*);
+       bool isUrlSupported (const std::string& mimeType);
+       static void* WpeRunView (void*);
+       void Reload ();
        void RemoveView ();
 };
 

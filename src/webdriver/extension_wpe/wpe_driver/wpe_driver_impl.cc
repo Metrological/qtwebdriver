@@ -164,9 +164,7 @@ void* WPEDriverImpl::WpeRunView (void *arg){
     WKRelease(shellURL);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    while (WPE_VIEW_STOP != pWpeDriverImpl->ViewStatus_) {
-        sem_wait(&pWpeDriverImpl->waitForViewControl_);
-    }
+    sem_wait(&pWpeDriverImpl->waitForViewControl_);
 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     //g_usleep(100*1000000);
@@ -177,6 +175,14 @@ void* WPEDriverImpl::WpeRunView (void *arg){
     WKRelease(pWpeDriverImpl->preferences_); 
 
     return 0;
+}
+void WPEDriverImpl::Reload() {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (NULL != page_) {
+        WKPageReload (page_);      
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    }
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
 bool WPEDriverImpl::isUrlSupported (const std::string& mimeType) {
@@ -191,5 +197,5 @@ bool WPEDriverImpl::isUrlSupported (const std::string& mimeType) {
 void WPEDriverImpl::RemoveView() {
    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
    sem_post(&waitForViewControl_);
-   ViewStatus_ = WPE_VIEW_STOP; 
+   pthread_join (WpeViewThreadID_, NULL);
 }
