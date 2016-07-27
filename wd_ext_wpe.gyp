@@ -34,18 +34,18 @@
       ],
     },
     {
-      'target_name': 'WebDriver_wpe_driver',
-      'type': 'shared_library',
-      
+      'target_name': 'WPE_Proxy',
+      'type': 'executable',
+      'product_name': 'WPEProxy',      
+
       'cflags': [
         '-std=c++11',
       ],
 
       'sources': [
-        'src/webdriver/extension_wpe/wpe_driver/wpe_driver_impl.cc',
-        'src/webdriver/extension_wpe/wpe_driver/wpe_driver.cc',
+        'src/webdriver/extension_wpe/wpe_driver/wpe_driver_proxy.cc',
       ],
-    }, 
+    },
     {
       'target_name': 'WebDriver_extension_wpe_base',
       'type': 'static_library',
@@ -60,6 +60,7 @@
         'src/webdriver/extension_wpe/wpe_view_handle.cc',
         'src/webdriver/extension_wpe/wpe_view_enumerator.cc',
         'src/webdriver/extension_wpe/wpe_view_executor.cc',
+        'src/webdriver/extension_wpe/wpe_driver/wpe_driver.cc',
       ],
     }, 
     {
@@ -69,7 +70,6 @@
       'product_name': 'WebDriver_extension_wpe_base',
 
       'dependencies': [
-        'WebDriver_wpe_driver',
         'WebDriver_extension_wpe_base',
       ],
     } 

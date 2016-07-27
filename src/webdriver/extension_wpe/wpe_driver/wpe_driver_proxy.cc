@@ -1,17 +1,11 @@
 
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/msg.h>
+#include <unistd.h>
+#include "extension_wpe/wpe_driver/wpe_driver_common.h"
+#include "extension_wpe/wpe_driver/wpe_driver_proxy.h"
 
-#include "extension_wpe/wpe_driver/wpe_driver_impl.h"
-
-WPEDriverImpl::WPEDriverImpl()
-{
-    sem_init(&waitForViewControl_, 0, 1);
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-}
-
-WPEDriverImpl::~WPEDriverImpl()
-{
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-}
 
 WKPageNavigationClientV0 s_navigationClient = {
     { 0, nullptr },
@@ -77,25 +71,44 @@ WKViewClientV0 s_viewClient = {
     },
 };
 
+static WKContextInjectedBundleClientV1 _handlerInjectedBundle = {
+    { 1, nullptr },
+    nullptr, // didReceiveMessageFromInjectedBundle
+    // didReceiveSynchronousMessageFromInjectedBundle
+    nullptr,// onDidReceiveSynchronousMessageFromInjectedBundle,
+    nullptr, // getInjectedBundleInitializationUserData
+};
 
-int WPEDriverImpl::CreateView () {
-    int ret = 0;
-    ViewStatus_ = WPE_VIEW_RUN; 
+WPEDriverProxy::WPEDriverProxy()
+{
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+}
+
+WPEDriverProxy::~WPEDriverProxy()
+{
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+}
+
+
+WDStatus WPEDriverProxy::CreateView () {
+    WDStatus ret = WD_SUCCESS;
     printf("\nInside %s:%s:%d Launching WKView\n", __FILE__, __func__, __LINE__);
-    ret = pthread_create(&WpeViewThreadID_, NULL, WpeRunView, this); 
-    if (ret != 0)
-        printf("Can't start WpeRunView Thread\n"); 
-    
+    if (0 != (pthread_create(&WpeViewThreadId_, NULL, RunWpeView, this ))) {
+        printf("Can't start RunWpeView Thread\n"); 
+        ret = WD_FAILURE;
+    }
     printf("\nInside %s:%s:%d Launching WKView\n", __FILE__, __func__, __LINE__);
     return ret; 
 }
 
-void* WPEDriverImpl::WpeRunView (void *arg){
+void* WPEDriverProxy::RunWpeView (void *arg){
 
-    WPEDriverImpl *pWpeDriverImpl =  (WPEDriverImpl*) arg;
+    WPEDriverProxy *pWpeDriverProxy =  (WPEDriverProxy*) arg;
+
+    pWpeDriverProxy->loop_ = g_main_loop_new(nullptr, FALSE);
 
     auto contextConfiguration = WKContextConfigurationCreate();
-    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/lib/libWebDriver_wpe_driver_injected_bundle.so");
+    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/llib/libWebDriver_wpe_driver_injected_bundle.so");
     WKContextConfigurationSetInjectedBundlePath(contextConfiguration, injectedBundlePath);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
@@ -116,67 +129,67 @@ void* WPEDriverImpl::WpeRunView (void *arg){
     WKRelease(injectedBundlePath);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    pWpeDriverImpl->context_ = WKContextCreateWithConfiguration(contextConfiguration);
+    pWpeDriverProxy->context_ = WKContextCreateWithConfiguration(contextConfiguration);
     WKRelease(contextConfiguration);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
     auto pageGroupIdentifier = WKStringCreateWithUTF8CString("WPEPageGroup");
-    pWpeDriverImpl->pageGroup_ = WKPageGroupCreateWithIdentifier(pageGroupIdentifier);
+    pWpeDriverProxy->pageGroup_ = WKPageGroupCreateWithIdentifier(pageGroupIdentifier);
     WKRelease(pageGroupIdentifier);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    pWpeDriverImpl->preferences_ = WKPreferencesCreate();
+    pWpeDriverProxy->preferences_ = WKPreferencesCreate();
     // Allow mixed content.
-    WKPreferencesSetAllowRunningOfInsecureContent(pWpeDriverImpl->preferences_, true);
-    WKPreferencesSetAllowDisplayOfInsecureContent(pWpeDriverImpl->preferences_, true);
+    WKPreferencesSetAllowRunningOfInsecureContent(pWpeDriverProxy->preferences_, true);
+    WKPreferencesSetAllowDisplayOfInsecureContent(pWpeDriverProxy->preferences_, true);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
     // By default allow console log messages to system console reporting.
     if (!g_getenv("WPE_SHELL_DISABLE_CONSOLE_LOG"))
-      WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(pWpeDriverImpl->preferences_, true);
+      WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(pWpeDriverProxy->preferences_, true);
 
-    WKPageGroupSetPreferences(pWpeDriverImpl->pageGroup_, pWpeDriverImpl->preferences_);
+    WKPageGroupSetPreferences(pWpeDriverProxy->pageGroup_, pWpeDriverProxy->preferences_);
 
-    pWpeDriverImpl->pageConfiguration_  = WKPageConfigurationCreate();
-    WKPageConfigurationSetContext(pWpeDriverImpl->pageConfiguration_, pWpeDriverImpl->context_);
-    WKPageConfigurationSetPageGroup(pWpeDriverImpl->pageConfiguration_, pWpeDriverImpl->pageGroup_);
-    WKPreferencesSetFullScreenEnabled(pWpeDriverImpl->preferences_, true);
+    pWpeDriverProxy->pageConfiguration_  = WKPageConfigurationCreate();
+    WKPageConfigurationSetContext(pWpeDriverProxy->pageConfiguration_, pWpeDriverProxy->context_);
+    WKPageConfigurationSetPageGroup(pWpeDriverProxy->pageConfiguration_, pWpeDriverProxy->pageGroup_);
+    WKPreferencesSetFullScreenEnabled(pWpeDriverProxy->preferences_, true);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
     if (!!g_getenv("WPE_SHELL_COOKIE_STORAGE")) {
       gchar *cookieDatabasePath = g_build_filename(g_get_user_cache_dir(), "cookies.db", nullptr);
       auto path = WKStringCreateWithUTF8CString(cookieDatabasePath);
       g_free(cookieDatabasePath);
-      auto cookieManager = WKContextGetCookieManager(pWpeDriverImpl->context_);
+      auto cookieManager = WKContextGetCookieManager(pWpeDriverProxy->context_);
       WKCookieManagerSetCookiePersistentStorage(cookieManager, path, kWKCookieStorageTypeSQLite);
     }
 
-    pWpeDriverImpl->view_ = WKViewCreate(pWpeDriverImpl->pageConfiguration_);
-    WKViewSetViewClient(pWpeDriverImpl->view_, &s_viewClient.base);
+    pWpeDriverProxy->view_ = WKViewCreate(pWpeDriverProxy->pageConfiguration_);
+    WKViewSetViewClient(pWpeDriverProxy->view_, &s_viewClient.base);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    pWpeDriverImpl->page_ = WKViewGetPage(pWpeDriverImpl->view_);
-    WKPageSetPageNavigationClient(pWpeDriverImpl->page_, &s_navigationClient.base);
+    pWpeDriverProxy->page_ = WKViewGetPage(pWpeDriverProxy->view_);
+    WKPageSetPageNavigationClient(pWpeDriverProxy->page_, &s_navigationClient.base);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    auto shellURL = WKURLCreateWithUTF8CString("www.google.com");
-    WKPageLoadURL(pWpeDriverImpl->page_, shellURL);
+    auto shellURL = WKURLCreateWithUTF8CString("http://www.google.com");
+    WKPageLoadURL(pWpeDriverProxy->page_, shellURL);
     WKRelease(shellURL);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    sem_wait(&pWpeDriverImpl->waitForViewControl_);
+    g_main_loop_run(pWpeDriverProxy->loop_);
 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    //g_usleep(100*1000000);
-    WKRelease(pWpeDriverImpl->view_);
-    WKRelease(pWpeDriverImpl->pageConfiguration_);
-    WKRelease(pWpeDriverImpl->pageGroup_);
-    WKRelease(pWpeDriverImpl->context_);
-    WKRelease(pWpeDriverImpl->preferences_); 
+    WKRelease(pWpeDriverProxy->view_);
+    WKRelease(pWpeDriverProxy->pageConfiguration_);
+    WKRelease(pWpeDriverProxy->pageGroup_);
+    WKRelease(pWpeDriverProxy->context_);
+    WKRelease(pWpeDriverProxy->preferences_); 
 
     return 0;
 }
-void WPEDriverImpl::Reload() {
+
+void WPEDriverProxy::Reload() {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (NULL != page_) {
         WKPageReload (page_);      
@@ -185,7 +198,7 @@ void WPEDriverImpl::Reload() {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
-bool WPEDriverImpl::isUrlSupported (const std::string& mimeType) {
+bool WPEDriverProxy::isUrlSupported (const std::string& mimeType) {
     
     if (NULL != page_) {
         return true;// (WKPageCanShowMIMEType(page_, mimeType)); TODO enable this once implement mimetype parsing 
@@ -194,8 +207,77 @@ bool WPEDriverImpl::isUrlSupported (const std::string& mimeType) {
     return false;
 }
 
-void WPEDriverImpl::RemoveView() {
-   printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
-   sem_post(&waitForViewControl_);
-   pthread_join (WpeViewThreadID_, NULL);
+void WPEDriverProxy::RemoveView() {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+    if (loop_ != NULL) {
+        g_main_loop_quit (loop_);
+        g_main_loop_unref(loop_);
+    }
+    WDStatus_ = WPE_WD_STOP; 
+    pthread_join (WpeViewThreadId_, NULL);
+}
+
+void* WPECommandDispatcherThread (void* pArgs)
+{
+    WDStatusBuf  stsBuf;
+    WDCommandBuf cmdBuf;
+ 
+    int cmdQueueId, stsQueueId;
+    cmdQueueId = stsQueueId = 0;
+    WPEDriverProxy* WPEProxy = (WPEDriverProxy*) pArgs;
+   
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+    if ((cmdQueueId = msgget(WPE_WD_CMD_KEY, 0666)) < 0) {
+         printf("Error in command queue creation \n");
+         return 0;
+    }
+    if ((stsQueueId = msgget(WPE_WD_STATUS_KEY, 0666)) < 0) {
+         printf("Error in status queue creation \n");
+         return 0;
+    }
+
+    while (WPE_WD_RUN == WPEProxy->WDStatus_) { 
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+        if (msgrcv (cmdQueueId, &cmdBuf, WD_CMD_SIZE, 0, 0) >= 0) {
+            
+            printf("This is %d from %s in %s command = %d\n",__LINE__,__func__,__FILE__, cmdBuf.command); 
+            stsBuf.status = WD_FAILURE;
+            switch (cmdBuf.command) {
+                case WD_CREATE_VIEW: {
+                    stsBuf.status = WPEProxy->CreateView();
+                    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+                    sleep(5);
+                    break;
+                }
+                case WD_REMOVE_VIEW: {
+                    WPEProxy->RemoveView();
+                    break;
+                }
+                case WD_RELOAD: {
+                    WPEProxy->Reload();
+                    break;
+                }
+            }
+            if (msgsnd (stsQueueId, &stsBuf, WD_STATUS_SIZE, 0/*IPC_NOWAIT*/) < 0)
+                 printf("Error in status queue send\n");
+            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+        }
+    }
+
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+//    msgctl(cmdQueueId, IPC_RMID, NULL);
+//    msgctl(stsQueueId, IPC_RMID, NULL);
+
+    return 0;
+}
+
+int main(int argc, char **argv) {
+    
+    pthread_t commandThreadId;
+
+    WPEDriverProxy* WPEProxy = new WPEDriverProxy;
+    WPEProxy->WDStatus_ = WPE_WD_RUN; 
+    pthread_create (&commandThreadId, NULL, WPECommandDispatcherThread, WPEProxy);
+    
+    pthread_join (commandThreadId, NULL);
 }

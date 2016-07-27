@@ -1,5 +1,6 @@
 #ifndef __WPE_DRIVER_H__
 #define __WPE_DRIVER_H__
+#include <string>
 
 class WPEDriver {
 public:
@@ -10,6 +11,7 @@ public:
     bool isUrlSupported (const std::string& mimeType);
     void WpeReload();
     void WpeRemoveView ();
+    static void* RunWpeProxy(void* arg);
 };
 
 extern WPEDriver *WpeDriver;
