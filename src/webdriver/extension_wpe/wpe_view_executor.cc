@@ -81,7 +81,7 @@ void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error *
 
 void WpeViewCmdExecutor::Reload(Error **error) {
     CHECK_VIEW_EXISTANCE
-    ExecuteCommand(view_, WPE_WD_REMOVE_VIEW, NULL);
+    ExecuteCommand(view_, WPE_WD_RELOAD, NULL);
 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
