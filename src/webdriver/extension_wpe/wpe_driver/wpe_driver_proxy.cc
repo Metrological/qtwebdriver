@@ -108,7 +108,7 @@ void* WPEDriverProxy::RunWpeView (void *arg){
     pWpeDriverProxy->loop_ = g_main_loop_new(nullptr, FALSE);
 
     auto contextConfiguration = WKContextConfigurationCreate();
-    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/llib/libWebDriver_wpe_driver_injected_bundle.so");
+    auto injectedBundlePath = WKStringCreateWithUTF8CString("/usr/lib/libWebDriver_wpe_driver_injected_bundle.so");
     WKContextConfigurationSetInjectedBundlePath(contextConfiguration, injectedBundlePath);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
@@ -246,7 +246,7 @@ void* WPECommandDispatcherThread (void* pArgs)
                 case WD_CREATE_VIEW: {
                     stsBuf.status = WPEProxy->CreateView();
                     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
-                    sleep(5);
+                    sleep(10);
                     break;
                 }
                 case WD_REMOVE_VIEW: {

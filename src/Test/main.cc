@@ -21,7 +21,6 @@ void PrintVersion();
 void PrintHelp();
 void InitUInputClient();
 
-WPEDriver* WpeDriver = new WPEDriver();
 
 int main(int argc, char *argv[])
 {

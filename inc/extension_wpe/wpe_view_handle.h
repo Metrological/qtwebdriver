@@ -16,11 +16,9 @@ public:
 
     virtual bool is_valid() const { return NULL;/* !view_.isNull();*/ };
     virtual bool equals(const ViewHandle* other) const;
-    void* get() { return NULL; /*view_.data();*/ };
+    void* get() { return webkit_view; }
     
 protected:
-   // QPointer<QWidget> view_;
-//private:
     virtual ~WpeViewHandle() {};
 };
 

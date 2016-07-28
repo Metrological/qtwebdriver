@@ -10,7 +10,7 @@ namespace webdriver {
 
 void WpeViewEnumeratorImpl::EnumerateViews(Session* session, std::set<ViewId>* views) const {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    ViewHandlePtr handle(new WpeViewHandle(WpeDriver->GetViewHandle ()));
+    ViewHandlePtr handle(new WpeViewHandle(GetWpeViewHandle()));
     if (handle != NULL) {
         ViewId viewId = session->GetViewForHandle(handle);
         if (!viewId.is_valid()) {

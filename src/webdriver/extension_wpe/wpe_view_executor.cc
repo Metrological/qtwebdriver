@@ -8,6 +8,7 @@
 #include "webdriver_session.h"
 #include "webdriver_view_factory.h"
 #include "wpe_view_util.h"
+#include "extension_wpe/wpe_view_handle.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
 namespace webdriver {
@@ -60,7 +61,8 @@ std::string WpeViewCmdExecutorCreator::GetViewTypeName() const {
 WpeViewCmdExecutor::WpeViewCmdExecutor(Session* session, ViewId viewId) 
     : ViewCmdExecutor (session, viewId) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    view_ = WpeViewUtil::getWpeView(session_, viewId);
+    view_ = ((WpeViewHandle* )WpeViewUtil::getWpeView(session_, viewId))->get();
+	
 }
 
 WpeViewCmdExecutor::~WpeViewCmdExecutor() {
@@ -79,7 +81,7 @@ void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error *
 
 void WpeViewCmdExecutor::Reload(Error **error) {
     CHECK_VIEW_EXISTANCE
-    WpeDriver->WpeReload();
+    ExecuteCommand(view_, WPE_WD_REMOVE_VIEW, NULL);
 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
@@ -216,7 +218,7 @@ void WpeViewCmdExecutor::FindElementsByXpath(void* parent, const std::string &qu
 void WpeViewCmdExecutor::Close(Error** error) {
     CHECK_VIEW_EXISTANCE
 
-    WpeDriver->WpeRemoveView();
+    ExecuteCommand(view_, WPE_WD_REMOVE_VIEW, NULL);
     session_->logger().Log(kInfoLogLevel, "close View("+view_id_.id()+")");
 
     session_->RemoveView(view_id_);
