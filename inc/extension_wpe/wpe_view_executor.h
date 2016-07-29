@@ -127,7 +127,7 @@ public:
     virtual void SendKeys(const string16& keys, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void FindElement(const ElementId& root_element, const std::string& locator, const std::string& query, ElementId* element, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void Close(Error** error) ;
-    virtual void SwitchTo(Error** error)  WPE_STUB_IMPL;
+    virtual void SwitchTo(Error** error);
     virtual void GetAlertMessage(std::string* text, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void SetAlertPromptText(const std::string& alert_prompt_text, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void AcceptOrDismissAlert(bool accept, Error** error) WPE_NOT_SUPPORTED_IMPL;

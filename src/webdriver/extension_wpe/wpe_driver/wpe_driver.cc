@@ -36,7 +36,9 @@ void* WpeHandle = NULL;
 
 WPEDriver::WPEDriver() 
          : WpeDriverThreadId(0) {
+    
 }
+
 
 WPEDriver::~WPEDriver() {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
@@ -177,6 +179,7 @@ int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg) {
         case WPE_WD_REMOVE_VIEW: {
             WpeDriver->WpeRemoveView ();
              
+            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
             delete WpeHandle;
             printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
             WpeHandle = NULL;

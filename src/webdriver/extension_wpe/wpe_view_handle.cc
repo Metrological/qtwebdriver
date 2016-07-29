@@ -10,8 +10,10 @@ WpeViewHandle::WpeViewHandle( void* view)
 	: webkit_view(view) { }
 
 bool WpeViewHandle::equals(const ViewHandle* other) const {
-     printf("\n:%s:%s:%d\n", __FILE__, __func__, __LINE__);
-     return ( this == other);
+    const WpeViewHandle* toCompare = dynamic_cast<const WpeViewHandle*>(other);
+   
+     printf("\n:%s:%s:%d %x = %x\n", __FILE__, __func__, __LINE__, webkit_view, toCompare->webkit_view);
+     return ( webkit_view == toCompare->webkit_view);
 }
 
 } // namespace webdriver

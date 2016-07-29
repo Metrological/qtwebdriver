@@ -73,6 +73,14 @@ void* WpeViewCmdExecutor::getElement(const ElementId &element, Error** error) {
     return NULL;
 }
 
+void WpeViewCmdExecutor::SwitchTo(Error** error) {
+    CHECK_VIEW_EXISTANCE
+
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    session_->set_current_view(view_id_);
+    session_->logger().Log(kInfoLogLevel, "SwitchTo - set current view ("+view_id_.id()+")");
+}
+
 void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error **error) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     CHECK_VIEW_EXISTANCE
