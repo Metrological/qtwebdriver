@@ -193,6 +193,7 @@ void WPEDriverProxy::Reload() {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (NULL != page_) {
         WKPageReload (page_);      
+        sleep (2);
         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     }
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
