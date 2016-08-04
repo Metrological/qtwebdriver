@@ -15,11 +15,15 @@ enum WDCommand {
    WD_CMD_NONE,
    WD_CREATE_VIEW,
    WD_REMOVE_VIEW,
-   WD_RELOAD
+   WD_RELOAD,
+   WD_JS_CMD_START,
+   WD_GET_URL,
+   WD_JS_CMD_END
 };
 
 struct WDStatusBuf {
     WDStatus status;
+    char rspMsg[WD_MSG_SIZE];
 };
 
 struct WDCommandBuf {

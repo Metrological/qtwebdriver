@@ -3,6 +3,7 @@
 
 #include <WPE/WebKit.h>
 #include <WPE/WebKit/WKCookieManagerSoup.h>
+#include <WPE/WebKit/WKWebAutomation.h>
 
 #include <string>
 #include <cstdio>
@@ -16,24 +17,38 @@ enum WPEDriverStatus {
 };
 
 class WPEDriverProxy {
-    public:
-       GMainLoop*       loop_;
-       WKViewRef        view_;
-       WKPageRef        page_;
-       WKContextRef     context_;
-       WKPageGroupRef   pageGroup_;
-       WKPreferencesRef preferences_;
-       WKPageConfigurationRef pageConfiguration_;
-       pthread_t WpeViewThreadId_;    
-       WPEDriverStatus  WDStatus_;       
-       
-       WPEDriverProxy ();
-       ~WPEDriverProxy ();
-       WDStatus CreateView ();
-       bool isUrlSupported (const std::string& mimeType);
-       static void* RunWpeView (void*);
-       void Reload ();
-       void RemoveView ();
+
+public:
+    WKViewRef        view_;
+    WKPageRef        page_;
+    WKContextRef     context_;
+    WKPageGroupRef   pageGroup_;
+    WKPreferencesRef preferences_;
+    WKPageConfigurationRef pageConfiguration_;
+
+    GMainLoop*       loop_;
+    pthread_t        WpeViewThreadId_;
+    WPEDriverStatus  WDStatus_;
+
+    int              requestID_;
+    std::string       browsingContext_;
+    WKWebAutomationSessionRef webAutomationSession_;
+
+    WPEDriverProxy();
+    ~WPEDriverProxy();
+
+    WDStatus CreateView();
+    void Reload();
+    void RemoveView();
+    void GetURL(const std::string& command);
+    bool isUrlSupported(const std::string& mimeType);
+    static void* RunWpeView(void*);
+
+private:
+    void CreateJSScript(const char* methodName, bool isContextRequired, const char* jsScript, std::string& command);
+    void ExecuteJSCommand(const char* methodName, bool isContextRequired, const char* jsScript);
+    void CreateBrowsingContext();
+    void CloseBrowsingContext();
 };
 
 #endif // __WPE_DRIVER_PROXY_H__ 

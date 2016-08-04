@@ -120,7 +120,7 @@ void WPEDriver::WpeReload () {
         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     }
     else
-        printf("View doesn't exisit\n");
+        printf("View doesn't exist\n");
 
     return;
 }
@@ -143,6 +143,28 @@ void WPEDriver::WpeRemoveView () {
         printf("View already removed\n");
 
     return;
+}
+
+void WPEDriver::WpeGetURL(std::string* url) {
+    int ret = 0;
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (WpeHandle) {
+        // Send Remove View Command
+        WPE_SEND_COMMAND(WD_GET_URL, "");
+        WPE_WAIT_FOR_STATUS(ret);
+        if (!ret) { //success
+            ParseJSResponse(stsBuff.rspMsg, url); 
+        }
+    }
+    else
+        printf("View doesn't exist\n");
+
+    return;
+}
+
+void WPEDriver::ParseJSResponse(char *rspMsg, std::string* response) { 
+//TODO: Recheck the location from where this has to do
+
 }
 
 int CreateWpeView ( void **handle) {
@@ -177,7 +199,7 @@ int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg) {
             break;
         }
         case WPE_WD_REMOVE_VIEW: {
-            WpeDriver->WpeRemoveView ();
+            WpeDriver->WpeRemoveView();
              
             printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
             delete WpeHandle;
@@ -189,7 +211,9 @@ int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg) {
             //WpeDriver->isUrlSupported(arg);
             break;
         }
-
+        case WPE_WD_GET_URL: {
+            WpeDriver->WpeGetURL((std::string*)arg);
+        }
         default:
             break;
     }

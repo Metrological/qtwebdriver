@@ -26,7 +26,7 @@ WpeWidget::~WpeWidget() {}
 const ViewType WpeViewCmdExecutorCreator::WPE_VIEW_TYPE = 0x13f6;    
 
 WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
-	: ViewCmdExecutorCreator() { printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); }
+    : ViewCmdExecutorCreator() { printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); }
 
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
     void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
@@ -62,7 +62,6 @@ WpeViewCmdExecutor::WpeViewCmdExecutor(Session* session, ViewId viewId)
     : ViewCmdExecutor (session, viewId) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     view_ = ((WpeViewHandle* )WpeViewUtil::getWpeView(session_, viewId))->get();
-	
 }
 
 WpeViewCmdExecutor::~WpeViewCmdExecutor() {
@@ -203,6 +202,8 @@ void WpeViewCmdExecutor::NavigateToURL(const std::string& url, bool sync, Error*
 }
 
 void WpeViewCmdExecutor::GetURL(std::string* url, Error** error) {
+    CHECK_VIEW_EXISTANCE
+    ExecuteCommand(view_, WPE_WD_GET_URL, url);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
