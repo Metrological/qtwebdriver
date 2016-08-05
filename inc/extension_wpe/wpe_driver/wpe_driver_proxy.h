@@ -31,7 +31,7 @@ public:
     WPEDriverStatus  WDStatus_;
 
     int              requestID_;
-    std::string       browsingContext_;
+    std::string      browsingContext_;
     WKWebAutomationSessionRef webAutomationSession_;
 
     WPEDriverProxy();
@@ -45,9 +45,13 @@ public:
     static void* RunWpeView(void*);
 
 private:
-    void CreateJSScript(const char* methodName, bool isContextRequired, const char* jsScript, std::string& command);
-    void ExecuteJSCommand(const char* methodName, bool isContextRequired, const char* jsScript);
-    void CreateBrowsingContext();
+    void CreateJSScript(const char* methodName, const char* handleStr, const char* jsScript, 
+	                    const char* argList, std::string& command);
+    void ExecuteJSCommand(const  char* methodName, const char* handleStr, 
+                          const char* jsScript, const char* argList);
+    void ParseJSResponse(const char *response, char *attrib, std::string& attribStr);
+	
+	void CreateBrowsingContext();
     void CloseBrowsingContext();
 };
 
