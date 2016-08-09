@@ -107,7 +107,7 @@ static void AutomationCallback(WKStringRef wkRspMsg) {
     size_t stringLength = WKStringGetUTF8CString(wkRspMsg, buffer.get(), bufferSize);
 
     respMsg.assign(buffer.get());
-    printf("\n Response : = %s\n", respMsg.c_str());
+    printf("\n Response Msg : = %s\n", respMsg.c_str());
     sem_post(&jsRespWait);
 }
 
@@ -206,16 +206,32 @@ void* WPEDriverProxy::RunWpeView (void *arg){
     g_main_loop_run(pWpeDriverProxy->loop_);
 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    pWpeDriverProxy->CloseBrowsingContext();
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);fflush(stdout);
+    WKRelease(pWpeDriverProxy->webAutomationSession_);
+
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     WKRelease(pWpeDriverProxy->view_);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);fflush(stdout);
     WKRelease(pWpeDriverProxy->pageConfiguration_);
+
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);fflush(stdout);
     WKRelease(pWpeDriverProxy->pageGroup_);
     WKRelease(pWpeDriverProxy->context_);
     WKRelease(pWpeDriverProxy->preferences_);
 
-    pWpeDriverProxy->CloseBrowsingContext();
-    WKRelease(pWpeDriverProxy->webAutomationSession_);
-
     return 0;
+}
+
+void WPEDriverProxy::LoadURL(const char* url) {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (NULL != page_) {
+        auto shellURL = WKURLCreateWithUTF8CString(url);
+        WKPageLoadURL (page_, shellURL);
+        sleep (2);
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    }
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
 void WPEDriverProxy::Reload() {
@@ -246,18 +262,30 @@ void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleSt
     json_object *jmethodStr = json_object_new_string(methodName);
     json_object_object_add(jobj, "method", jmethodStr);
 
-    if (strcmp (handleStr, "")) {
-        json_object *jhandleStr = json_object_new_string(browsingContext_.c_str());
-        json_object_object_add(jobj, handleStr, jhandleStr);
-    }
 
-    if (strcmp (jsScript, "")) {
-        json_object *jscriptStr = json_object_new_string(jsScript);
-        json_object_object_add(jobj, "function", jscriptStr);
-		json_object *jargStr = json_object_new_string(argList);
-		json_object_object_add(jobj, "arguments", jargStr);
-    }
+    //Create Parameters
+    {
+        json_object *subObj = json_object_new_object();
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        if (strcmp (handleStr, "")) {
+            json_object *jhandleStr = json_object_new_string(browsingContext_.c_str());
+            json_object_object_add(subObj, handleStr, jhandleStr);
+            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        }
 
+        if (strcmp (jsScript, "")) {
+            json_object *jscriptStr = json_object_new_string(jsScript);
+            json_object_object_add(subObj, "function", jscriptStr);
+            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            json_object *jargs = json_object_new_array();
+            json_object_array_add(jargs, json_object_new_string(argList));
+            json_object_object_add(subObj, "arguments", jargs);
+        }
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        json_object_object_add(jobj, "params", subObj);
+    }
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    
     command.assign(json_object_to_json_string(jobj));
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
@@ -268,36 +296,42 @@ void WPEDriverProxy::ExecuteJSCommand(const  char* methodName, const char* handl
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     CreateJSScript(methodName, handleStr, jsScript, argList, command);
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-
+    fflush(stdout);
     WKWebAutomationExecuteCommand(webAutomationSession_, WKStringCreateWithUTF8CString(command.c_str()), AutomationCallback);
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); fflush(stdout);
 }
 
-void WPEDriverProxy::ParseJSResponse(const char *response, char *attrib, std::string& attribStr) {
+WDStatus WPEDriverProxy::ParseJSResponse(const char *response, char *attrib, std::string& attribStr) {
+    WDStatus ret = WD_FAILURE;
     json_object *jsObj;
     jsObj = json_tokener_parse(response);
-   
+ 
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-    if (strcmp (attrib, "")) { 
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-        if(json_object_object_get_ex(jsObj, "result", &jsObj))
-            if(json_object_object_get_ex(jsObj, attrib, &jsObj)) {
+    if (json_object_object_get_ex(jsObj, "result", &jsObj)) {
+        if (strcmp (attrib, "")) { 
+           printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+           if (json_object_object_get_ex(jsObj, attrib, &jsObj)) {
                 printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
                 const char *value = json_object_get_string(jsObj);
                 printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
                 attribStr.assign(value);
+                ret = WD_SUCCESS;
             }
+        } 
+
         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     }
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    return ret;
 }
+
 void WPEDriverProxy::CreateBrowsingContext() {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("&&&&&&&& This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     ExecuteJSCommand("Automation.createBrowsingContext", "", "", "");
     sem_wait(&jsRespWait);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     ParseJSResponse(respMsg.c_str(), "handle", browsingContext_);
     printf("Browsing Context = %s\n", browsingContext_.c_str());
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
 void WPEDriverProxy::CloseBrowsingContext() {
@@ -306,13 +340,16 @@ void WPEDriverProxy::CloseBrowsingContext() {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
-void WPEDriverProxy::GetURL(const std::string& url) {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+WDStatus WPEDriverProxy::GetURL(std::string& url) {
+    printf("&&&&&&&& This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction", 
-	                 "browsingContextHandle", 
-	                 "function() { return document.URL }", 
-					 "");
+                     "browsingContextHandle", 
+                     "function() { return document.URL }", 
+                     "");
+     
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    sem_wait(&jsRespWait);
+    return ParseJSResponse(respMsg.c_str(), "result", url);
 }
 
 void WPEDriverProxy::RemoveView() {
@@ -329,7 +366,8 @@ void* WPECommandDispatcherThread (void* pArgs)
 {
     WDStatusBuf  stsBuf;
     WDCommandBuf cmdBuf;
- 
+    std::string  response; 
+
     int cmdQueueId, stsQueueId;
     cmdQueueId = stsQueueId = 0;
     WPEDriverProxy* WPEProxy = (WPEDriverProxy*) pArgs;
@@ -361,12 +399,16 @@ void* WPECommandDispatcherThread (void* pArgs)
                     WPEProxy->RemoveView();
                     break;
                 }
+                case WD_LOAD_URL: {
+                    WPEProxy->LoadURL(cmdBuf.message);
+                    break; 
+                }
                 case WD_RELOAD: {
                     WPEProxy->Reload();
-                    //break; fallthrough to check JS Execution Sequence
+                    break; 
                 }
                 case WD_GET_URL: {
-                    WPEProxy->GetURL(cmdBuf.message);
+                    stsBuf.status = WPEProxy->GetURL(response);
                     break;
                 }
                 case WD_JS_CMD_END:
@@ -380,8 +422,8 @@ void* WPECommandDispatcherThread (void* pArgs)
             if (cmdBuf.command > WD_JS_CMD_START && cmdBuf.command < WD_JS_CMD_END)
             {
                 //wait for responces from webkit
-                printf("\n Response : = %s\n", respMsg.c_str());
-                strcpy (stsBuf.rspMsg, respMsg.c_str()); //TODO: need to check parsing also required here.
+                printf("\n Response : = %s\n", response.c_str());
+                strcpy (stsBuf.rspMsg, response.c_str()); //TODO: need to check parsing also required here.
             }
             if (msgsnd (stsQueueId, &stsBuf, WD_STATUS_SIZE, 0/*IPC_NOWAIT*/) < 0)
                  printf("Error in status queue send\n");

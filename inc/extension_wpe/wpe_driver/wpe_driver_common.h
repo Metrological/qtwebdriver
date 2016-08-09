@@ -15,6 +15,7 @@ enum WDCommand {
    WD_CMD_NONE,
    WD_CREATE_VIEW,
    WD_REMOVE_VIEW,
+   WD_LOAD_URL,
    WD_RELOAD,
    WD_JS_CMD_START,
    WD_GET_URL,

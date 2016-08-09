@@ -10,6 +10,7 @@
 #include "wpe_view_util.h"
 #include "extension_wpe/wpe_view_handle.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
+using namespace std;
 
 namespace webdriver {
 
@@ -199,11 +200,16 @@ void WpeViewCmdExecutor::ActiveElement(ElementId* element, Error** error) {
 
 void WpeViewCmdExecutor::NavigateToURL(const std::string& url, bool sync, Error** error) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    CHECK_VIEW_EXISTANCE
+    ExecuteCommand(view_, WPE_WD_LOAD_URL, (void*) &url);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
 void WpeViewCmdExecutor::GetURL(std::string* url, Error** error) {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     CHECK_VIEW_EXISTANCE
     ExecuteCommand(view_, WPE_WD_GET_URL, url);
+    printf("URL : %s\n", url->c_str());
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 

@@ -38,9 +38,10 @@ public:
     ~WPEDriverProxy();
 
     WDStatus CreateView();
+    void LoadURL(const char* url);
     void Reload();
     void RemoveView();
-    void GetURL(const std::string& command);
+    WDStatus GetURL(std::string& command);
     bool isUrlSupported(const std::string& mimeType);
     static void* RunWpeView(void*);
 
@@ -49,9 +50,9 @@ private:
 	                    const char* argList, std::string& command);
     void ExecuteJSCommand(const  char* methodName, const char* handleStr, 
                           const char* jsScript, const char* argList);
-    void ParseJSResponse(const char *response, char *attrib, std::string& attribStr);
+    WDStatus ParseJSResponse(const char *response, char *attrib, std::string& attribStr);
 	
-	void CreateBrowsingContext();
+    void CreateBrowsingContext();
     void CloseBrowsingContext();
 };
 
