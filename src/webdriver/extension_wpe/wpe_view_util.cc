@@ -16,11 +16,11 @@ bool WpeViewUtil::isUrlSupported(void *pWpeView, const std::string& url, Error 	
     std::string mimeType;
 	
     //TODO: implement mimeType parser
-    return ExecuteCommand(pWpeView, WPE_WD_IS_URL_SUPPORTED, NULL);//WpeDriver->isUrlSupported(mimeType) ;
+    return true;//ExecuteCommand(pWpeView, WPE_WD_IS_URL_SUPPORTED, NULL);//WpeDriver->isUrlSupported(mimeType) ;
 }	
 
 bool WpeViewUtil::isUrlSupported(const std::string& url, Error 	**error) {
-    return false;
+    return true;
 }
 
 std::string WpeViewUtil::extractClassName(const std::string& url) {
