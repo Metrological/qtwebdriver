@@ -72,6 +72,7 @@ bool UInputManager::registerUinputDevice() {
     }
     registerHandledKeys();
 
+    ret = ioctl(_deviceDescriptor, UI_DEV_CREATE); // create device
     if (0 > ret) {
         _logger->Log(kWarningLogLevel, "Can not create user input device");
         return false;
