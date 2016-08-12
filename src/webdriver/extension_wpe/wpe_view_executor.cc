@@ -123,6 +123,10 @@ void WpeViewCmdExecutor::SendKeys(const string16& keys, Error** error) {
        bool consumed = false;
        consumed = UInputEventDispatcher::getInstance()->dispatch(&(*it), consumed);
        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+
+
+
+        ++it;
     }
 }
 
