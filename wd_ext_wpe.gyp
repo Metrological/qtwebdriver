@@ -55,6 +55,7 @@
       'sources': [
         'src/webdriver/extension_wpe/uinput_manager.cc',
         'src/webdriver/extension_wpe/uinput_event_dispatcher.cc',
+        'src/webdriver/extension_wpe/wpe_key_converter.cc',
         'src/webdriver/extension_wpe/wpe_view_util.cc',
         'src/webdriver/extension_wpe/wpe_view_creator.cc',
         'src/webdriver/extension_wpe/wpe_view_handle.cc',

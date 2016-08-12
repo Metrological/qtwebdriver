@@ -136,7 +136,7 @@ void WPEDriver::WpeReload () {
         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     }
     else
-        printf("View doesn't exist\n");
+        printf("View doesn't exisit\n");
 
     return;
 }

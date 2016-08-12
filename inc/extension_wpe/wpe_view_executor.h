@@ -43,7 +43,8 @@ public:
     virtual void GoBack(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void Reload(Error** error);
     virtual void GetSource(std::string* source, Error** error);
-    virtual void SendKeys(const ElementId& element, const string16& keys, Error** error);
+    virtual void SendKeys(const string16& keys, Error** error);
+    virtual void SendKeys(const ElementId& element, const string16& keys, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetElementScreenShot(const ElementId& element, std::string* png, Error** error);
     virtual void MouseDoubleClick(Error** error);
     virtual void MouseButtonUp(Error** error);
@@ -124,7 +125,6 @@ public:
     virtual void SetBounds(const Rect& bounds, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void Maximize(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetScreenShot(std::string* png, Error** error) WPE_NOT_SUPPORTED_IMPL;
-    virtual void SendKeys(const string16& keys, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void FindElement(const ElementId& root_element, const std::string& locator, const std::string& query, ElementId* element, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void Close(Error** error) ;
     virtual void SwitchTo(Error** error);

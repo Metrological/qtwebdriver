@@ -7,11 +7,12 @@
 #include "shutdown_command.h"
 #include "webdriver_route_patterns.h"
 #include "extension_wpe/uinput_manager.h"
-#include "extension_wpe/wd_event_dispatcher.h"
+#include "extension_wpe/uinput_event_dispatcher.h"
 #include "extension_wpe/wpe_view_creator.h"
 #include "extension_wpe/wpe_view_creator.h"
 #include "extension_wpe/wpe_view_enumerator.h"
 #include "extension_wpe/wpe_view_executor.h"
+#include "extension_wpe/wpe_key_converter.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
 #include "webdriver_switches.h"
@@ -24,15 +25,15 @@ void InitUInputClient();
 
 int main(int argc, char *argv[])
 {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     GMainLoop* loop = g_main_loop_new(NULL, FALSE);
     base::AtExitManager exit;
     CommandLine cmd_line(CommandLine::NO_PROGRAM);
     cmd_line.InitFromArgv(argc, argv);
 
     // Create WPE Driver instance
-       // WPE Webkit View
+    // WPE Webkit View
     webdriver::ViewCreator* wpeViewCreator = new webdriver::WpeViewCreator();
-//    wpeViewCreator->RegisterViewClass<WpeWidget>("WpeWidget");
     webdriver::ViewFactory::GetInstance()->AddViewCreator(wpeViewCreator);
 
     webdriver::ViewEnumerator::AddViewEnumeratorImpl(new webdriver::WpeViewEnumeratorImpl());
@@ -53,10 +54,12 @@ int main(int argc, char *argv[])
     routeTableWithShutdownCommand->Add<webdriver::ShutdownCommand>(shutdownCommandRoute);
     routeTableWithShutdownCommand->Add<webdriver::ShutdownCommand>(webdriver::CommandRoutes::kShutdown);
     wd_server->SetRouteTable(routeTableWithShutdownCommand);
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
-    //    InitUInputClient();
+    InitUInputClient();
 
     /* Start webdriver */
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     int startError = wd_server->Start();
     if (startError){
         std::cout << "Error while starting server, errorCode " << startError << std::endl;
@@ -64,6 +67,7 @@ int main(int argc, char *argv[])
     }
     std::cout << "webdriver server started..." << std::endl;
 
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     g_main_loop_run(loop);
     g_main_loop_unref(loop);
     return 0; 
@@ -72,17 +76,14 @@ int main(int argc, char *argv[])
 
 void InitUInputClient() {
     // start user input device
-    CommandLine cmdLine = webdriver::Server::GetInstance()->GetCommandLine();
-    if (cmdLine.HasSwitch(webdriver::Switches::kUserInputDevice))
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    UInputManager *manager = UInputManager::getInstance();
+    if (!manager->isReady())
     {
-        UInputManager *manager = UInputManager::getInstance();
-        if (!manager->isReady())
-        {
-            manager->registerUinputDevice();
-        }
+         manager->registerUinputDevice();
 
-//        WDEventDispatcher::getInstance()->add(new UInputEventDispatcher(manager));
     }
+    UInputEventDispatcher::getInstance()->registerUInputManager(manager);
 }
 
 void PrintVersion() {

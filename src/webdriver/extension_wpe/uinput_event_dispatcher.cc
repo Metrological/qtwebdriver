@@ -1,49 +1,43 @@
-/****************************************************************************
-**
-** Copyright © 1992-2014 Cisco and/or its affiliates. All rights reserved.
-** All rights reserved.
-** 
-** $CISCO_BEGIN_LICENSE:LGPL$
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** $CISCO_END_LICENSE$
-**
-****************************************************************************/
 
 #include "build/build_config.h"
+#include "extension_wpe/wpe_key_converter.h"
 #include "extension_wpe/uinput_event_dispatcher.h"
 
 #if defined(OS_LINUX)
 
-UInputEventDispatcher::UInputEventDispatcher(UInputManager *manager)
-    : _eventManager(manager)
-{
+UInputEventDispatcher* UInputEventDispatcher::_instance = NULL;
+
+UInputEventDispatcher::UInputEventDispatcher() {
 }
 
-UInputEventDispatcher::~UInputEventDispatcher()
-{
+UInputEventDispatcher::~UInputEventDispatcher() {
 }
 
-bool UInputEventDispatcher::dispatch(void *event, bool consumed)
-{
+UInputEventDispatcher* UInputEventDispatcher::getInstance() {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (NULL == _instance) {
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        _instance = new UInputEventDispatcher;
+    }
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    return _instance;
+}
+
+void UInputEventDispatcher::registerUInputManager(UInputManager *manager) {
+    _eventManager = manager;
+}
+
+bool UInputEventDispatcher::dispatch(void *event, bool consumed) {
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (consumed)
         return false;
 
-    void *keyEvent;// = dynamic_cast<void*>(event);
-    if(NULL != keyEvent)
-    {
-        _eventManager->injectKeyEvent(keyEvent);
+    if(NULL != event) {
+        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        _eventManager->injectKeyEvent(event);
 
         return true;
     }
-
     return false;
 }
 

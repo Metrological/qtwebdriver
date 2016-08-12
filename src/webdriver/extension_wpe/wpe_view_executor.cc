@@ -10,7 +10,8 @@
 #include "wpe_view_util.h"
 #include "extension_wpe/wpe_view_handle.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
-using namespace std;
+#include "extension_wpe/uinput_event_dispatcher.h"
+#include "extension_wpe/wpe_key_converter.h"
 
 namespace webdriver {
 
@@ -31,13 +32,14 @@ WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
 
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
     void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("This is %d from %s in %s pWpeView = %x\n",__LINE__,__func__,__FILE__, pWpeView);
 
     if (NULL != pWpeView) {
         session->logger().Log(kFineLogLevel, "Web executor for view("+viewId.id()+")");    
         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
         return new WpeViewCmdExecutor(session, viewId);
     }
+    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     return NULL;
 }
 
@@ -89,17 +91,39 @@ void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error *
 
 void WpeViewCmdExecutor::Reload(Error **error) {
     CHECK_VIEW_EXISTANCE
-    ExecuteCommand(view_, WPE_WD_RELOAD, NULL);
-
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    ExecuteCommand(view_, WPE_WD_RELOAD, NULL);
 }
 
 void WpeViewCmdExecutor::GetSource(std::string* source, Error** error) {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 }
 
-void WpeViewCmdExecutor::SendKeys(const ElementId& element, const string16& keys, Error** error) {
+//void WpeViewCmdExecutor::SendKeys(const ElementId& element, const string16& keys, Error** error) {
+void WpeViewCmdExecutor::SendKeys(const string16& keys, Error** error) {
+    CHECK_VIEW_EXISTANCE
+    std::string err_msg;
+    std::vector<KeyEvent> key_events;
+    int modifiers = session_->get_sticky_modifiers();
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    if (!KeyConverter::ConvertKeysToWebKeyEvents(keys,
+                               session_->logger(),
+                               false,
+                               &modifiers,
+                               &key_events,
+                               &err_msg)) {
+        session_->logger().Log(kSevereLogLevel, "SendKeys - cant convert keys:"+err_msg);
+        *error = new Error(kUnknownError, "SendKeys - cant convert keys:"+err_msg);
+        return;
+    } //TODO: Test modifier keys + special keys like tab, enter, delete etc
+
+    session_->set_sticky_modifiers(modifiers);
+    std::vector<KeyEvent>::iterator it = key_events.begin();
+    while (it != key_events.end()) {
+       bool consumed = false;
+       consumed = UInputEventDispatcher::getInstance()->dispatch(&(*it), consumed);
+       printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    }
 }
 
 void WpeViewCmdExecutor::GetElementScreenShot(const ElementId& element, std::string* png, Error** error) {
