@@ -14,12 +14,10 @@ UInputEventDispatcher::~UInputEventDispatcher() {
 }
 
 UInputEventDispatcher* UInputEventDispatcher::getInstance() {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (NULL == _instance) {
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         _instance = new UInputEventDispatcher;
     }
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     return _instance;
 }
 
@@ -28,12 +26,10 @@ void UInputEventDispatcher::registerUInputManager(UInputManager *manager) {
 }
 
 bool UInputEventDispatcher::dispatch(void *event, bool consumed) {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     if (consumed)
         return false;
 
     if(NULL != event) {
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
         _eventManager->injectKeyEvent(event);
 
         return true;

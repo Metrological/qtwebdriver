@@ -125,7 +125,7 @@ public:
     virtual void SetBounds(const Rect& bounds, Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void Maximize(Error** error) WPE_NOT_SUPPORTED_IMPL;
     virtual void GetScreenShot(std::string* png, Error** error) WPE_NOT_SUPPORTED_IMPL;
-    virtual void FindElement(const ElementId& root_element, const std::string& locator, const std::string& query, ElementId* element, Error** error) WPE_NOT_SUPPORTED_IMPL;
+    virtual void FindElement(const ElementId& root_element, const std::string& locator, const std::string& query, ElementId* element, Error** error);
     virtual void Close(Error** error) ;
     virtual void SwitchTo(Error** error);
     virtual void GetAlertMessage(std::string* text, Error** error) WPE_NOT_SUPPORTED_IMPL;

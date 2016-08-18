@@ -13,7 +13,7 @@ namespace webdriver {
 
 WpeViewCreator::WpeViewCreator()
 {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
 WpeViewCreator::~WpeViewCreator()
@@ -22,18 +22,18 @@ WpeViewCreator::~WpeViewCreator()
 }
 bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::string& className,
                                            const Point* position, const Size* size, ViewHandle** view) const {
-    printf("%s:%s:%d Enter : requested class name : %s\n", __FILE__, __func__, __LINE__, className.c_str());
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     void *WpeHandle;
 
     if (className.empty() || className == "WpeWebView") {  
         int ret = CreateWpeView(&WpeHandle);
         if (0 != ret) {
-            printf("%s:%s:%d  : WebKitCreateView failed \n", __FILE__, __func__, __LINE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             // view was not created
             return false;
         }
     
-        printf("%s:%s:%d  : WebKitCreateView created \n", __FILE__, __func__, __LINE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         *view = new WpeViewHandle((void*) WpeHandle);
         return true;
     }
@@ -42,7 +42,7 @@ bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::stri
 
 bool WpeViewCreator::CreateViewForUrl(const Logger& logger, const std::string& url,
                                           const Point* position, const Size* size, ViewHandle** view) const {
-    printf("\nInside %s:%s:%d\n", __FILE__, __func__, __LINE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     Error* tmp_err = NULL;
     if (!WpeViewUtil::isUrlSupported(url, &tmp_err )) {

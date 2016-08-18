@@ -103,21 +103,19 @@ bool KeyConverter::IsModifierKey(char16 key) {
 /// Returns whether |key| is a special WebDriver key. If true, |key_code| will
 /// be set.
 bool KeyConverter::KeyCodeFromSpecialWebDriverKey(char16 key, KeyEvent::Key* key_code) {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     int index = static_cast<int>(key) - 0xE000U;
     bool is_special_key = index >= 0 &&
         index < static_cast<int>(arraysize(kSpecialWebDriverKeys));
     if (is_special_key){
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
        *key_code = kSpecialWebDriverKeys[index];
     }
     else {
-         printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         // Key_Escape = 0x01000000. Offset from this for undefined keys
         int Value = 0x01000000 + index; 
         *key_code =  static_cast<KeyEvent::Key>(Value);
-         printf("\nValue from KeyCodeFromSpecialWebDriverKey : %x\n", Value); 
-         printf("\nKey Code from KeyCodeFromSpecialWebDriverKey : %x\n",*key_code);
     }
     return is_special_key;
 }
@@ -163,11 +161,10 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
                                int* modifiers,
                                std::vector<KeyEvent>* client_key_events,
                                std::string* error_msg) {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     std::vector<KeyEvent> key_events;
 
     string16 keys = client_keys;
-    printf("Keys : %s\n", keys.c_str());
     // Add an implicit NULL character to the end of the input to depress all
     // modifiers.
     if (release_modifiers)
@@ -179,7 +176,7 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
         char16 key = keys[i];
 
         if (key == kWebDriverNullKey) {
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             // Release all modifier keys and clear |stick_modifiers|.
             if (sticky_modifiers & KeyEvent::ShiftModifier)
                 key_events.push_back(
@@ -198,7 +195,7 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
         }
         
         if (IsModifierKey(key)) {
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             // Press or release the modifier, and adjust |sticky_modifiers|.
             bool modifier_down = false;
             KeyEvent::Key key_code = KeyEvent::KEY_UNKNOWN;
@@ -270,16 +267,16 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
                     //all_modifiers | webdriver_modifiers);
             }
         } else {
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             KeyEvent::KeyboardModifiers necessary_modifiers;
             all_modifiers = KeyEvent::KeyboardModifiers((int)all_modifiers | (int)necessary_modifiers);
 
             if (key_code != KeyEvent::KEY_UNKNOWN) {
-                printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             }
 
             if (unmodified_text.empty() || modified_text.empty()) {
-                printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                 // Do a best effort and use the raw key we were given.
                 logger.Log(
                     kWarningLogLevel,
@@ -315,7 +312,7 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
                 all_modifiers & kModifiers[i].mask &&
                 !(sticky_modifiers & kModifiers[i].mask);
             if (necessary_modifiers[i]) {
-                printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                 key_events.push_back(
                     KeyEvent(KeyEvent::KeyPress, kModifiers[i].key_code, sticky_modifiers, str, autoPress));
             }
@@ -323,21 +320,19 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
         }
 
       if (unmodified_text.length() || modified_text.length()) {
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             key_events.push_back(KeyEvent(KeyEvent::KeyPress, key_code, all_modifiers, unmodified_text.c_str(), autoPress));
             if (sendRelease) {
-                printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                 key_events.push_back(KeyEvent(KeyEvent::KeyRelease, key_code, all_modifiers, unmodified_text.c_str(), autoRelease));      
-                printf("\n code: %x\n", key_code);
-                printf("\n modified_text : %s\n",unmodified_text.c_str());
             }
         }
        else
         {
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             key_events.push_back(KeyEvent(KeyEvent::KeyPress, key_code, all_modifiers, str, autoPress));
             if (sendRelease) {
-                printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                 key_events.push_back(KeyEvent(KeyEvent::KeyRelease, key_code, all_modifiers, str, autoRelease));
             }
         }
@@ -346,7 +341,7 @@ bool KeyConverter::ConvertKeysToWebKeyEvents(const string16& client_keys,
         if (sendRelease) {
             for (int i = 2; i > -1; --i) {
                 if (necessary_modifiers[i]) {
-                    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+                    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                     key_events.push_back( 
                         KeyEvent(KeyEvent::KeyRelease, kModifiers[i].key_code, sticky_modifiers, str, autoRelease));
         

@@ -37,7 +37,7 @@ UInputManager::~UInputManager() {
 bool UInputManager::registerUinputDevice() {
     struct uinput_user_dev uidev;
 
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     _deviceDescriptor = open("/dev/uinput", O_WRONLY | O_NONBLOCK | O_CREAT | O_NDELAY, S_IREAD | S_IWRITE);
 
     if (0 > _deviceDescriptor) {
@@ -52,7 +52,7 @@ bool UInputManager::registerUinputDevice() {
         _logger->Log(kWarningLogLevel, "Can't register uinput key events");
         return false;
     }
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     ret = ioctl(_deviceDescriptor, UI_SET_EVBIT, EV_SYN);
     if (0 > ret) {
         _logger->Log(kWarningLogLevel, "Can't register uinput synchronization events");
@@ -93,10 +93,9 @@ int UInputManager::injectKeyEvent(void* event) {
     gettimeofday(&(ev.time), NULL);
 
     KeyEvent *keyEvent = (KeyEvent *) event;
-    printf("#### Key text: %s, modifiers: %d\n", keyEvent->text().c_str(), (int)keyEvent->modifiers());
     int keyText = keyEvent->text().c_str()[0];
 
-     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     // Check keyCode for capital letters
     if ((keyText>='>' && keyText<='Z') ||       // '>','?','@'  included
             (keyText>='!' && keyText<='&') ||   // '!' - '&'
@@ -109,20 +108,17 @@ int UInputManager::injectKeyEvent(void* event) {
         res = write(_deviceDescriptor, &ev, sizeof(ev));
     }
 
-    printf("%s:%s:%d #### Key code: %x\n", __FILE__, __func__, __LINE__, keyEvent->key());
-
     ev.type = EV_KEY;
     ev.value = keyEvent->type();
     keyCode = lookup_code(keyEvent->key(), &isShiftRequired);
     if (isShiftRequired) {
         ev.code = KEY_LEFTSHIFT;
         res = write(_deviceDescriptor, &ev, sizeof(ev));
-        printf("%s:%s:%d #### ev.code: %x type = %x\n", __FILE__, __func__, __LINE__, ev.code, ev.value);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     ev.code = keyCode;
     res = write(_deviceDescriptor, &ev, sizeof(ev));
 
-    printf("%s:%s:%d #### ev.code: %x type = %x\n", __FILE__, __func__, __LINE__, ev.code, ev.value);
     if (ev.value == KeyEvent::KeyRelease) {
         ev.type = EV_SYN;
         ev.code = SYN_REPORT;
@@ -192,7 +188,6 @@ static int lookup_code(int keysym, bool *isShiftRequired) {
     if (keysym & WD_NORMAL_KEY_IDENTIFIER) {
         keysym = (keysym & WD_NORMAL_KEY_MASK);
     }
-    printf("%s:%s:%d keysym = %x \n",__FILE__, __func__, __LINE__, keysym);
 
     if (((0x41 <= keysym) && (0x5A >= keysym)) ||  /* Identify Uppercase Letters */
         ((0x21 <= keysym) && (0x29 >= keysym)) ||  /* Identify Specical Characters */

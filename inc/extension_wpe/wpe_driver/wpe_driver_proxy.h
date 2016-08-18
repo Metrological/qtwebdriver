@@ -38,19 +38,27 @@ public:
     ~WPEDriverProxy();
 
     WDStatus CreateView();
-    void LoadURL(const char* url);
-    void Reload();
-    void RemoveView();
-    WDStatus GetURL(std::string& command);
-    bool isUrlSupported(const std::string& mimeType);
+    WDStatus LoadURL(const char* url);
+    WDStatus Reload();
+    WDStatus GetURL(char* command);
+    WDStatus GetAttribute(const char* reqParams, char* value);
+    WDStatus FindElement(bool isElements, const char* reqParams, char* element);
+    bool     isUrlSupported(const std::string& mimeType);
+    void     RemoveView();
     static void* RunWpeView(void*);
 
 private:
+
     void CreateJSScript(const char* methodName, const char* handleStr, const char* jsScript, 
-	                    const char* argList, std::string& command);
+                        const char* argList, std::string& command);
     void ExecuteJSCommand(const  char* methodName, const char* handleStr, 
                           const char* jsScript, const char* argList);
-    WDStatus ParseJSResponse(const char *response, char *attrib, std::string& attribStr);
+    WDStatus ParseJSResponse(const char* response, char* attrib, std::string& attribValue);
+
+    WDStatus FindElementById(const char* rootElement, const char* query, std::string& element);
+    WDStatus FindElementByName(const char* rootElement, const char* query, std::string& element);
+    WDStatus FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element);
+    WDStatus FindElementByXPath(bool iselements, const char* rootElement, const char* query, std::string& element);
 	
     void CreateBrowsingContext();
     void CloseBrowsingContext();

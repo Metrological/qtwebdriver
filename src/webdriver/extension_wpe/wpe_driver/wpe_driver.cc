@@ -27,11 +27,11 @@ void* WpeHandle = NULL;
                  printf("Command executed successfully %d\n", stsBuff.status); \
              else                                           \
              {                                              \
-                 printf("Error in execution %d\n", stsBuff.status); \
+                 printf("Error in command execution %d\n", stsBuff.status); \
                  retStatus =  stsBuff.status;               \
              }                                              \
          }                                                  \
-         printf ("Receive Status : %s\n", strerror(errno)); \
+         printf ("Message Receive Status : %s\n", strerror(errno)); \
     }
 
 WPEDriver::WPEDriver() 
@@ -41,18 +41,16 @@ WPEDriver::WPEDriver()
 
 
 WPEDriver::~WPEDriver() {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
 void* WPEDriver::RunWpeProxy(void *pArg) {
     int status;
     pid_t wpeProxyPid;
-    //WPEDriver* WpeDriver = (WPEDriver*) pArg;
-   
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     wpeProxyPid = fork();
     if (wpeProxyPid == 0) {
-        printf("This is %d from %s in %s Pid = %d\n",__LINE__,__func__,__FILE__, wpeProxyPid);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         int execStatus = execl ("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", NULL);
         if (execStatus ==-1) {
             printf ("Error in loading WPEProxy\n");
@@ -61,20 +59,19 @@ void* WPEDriver::RunWpeProxy(void *pArg) {
     } else if (wpeProxyPid < 0) {
         printf ("Failed start WPEProxy\n");
     } else { 
-        printf("This is %d from %s in %s Pid = %d\n",__LINE__,__func__,__FILE__, wpeProxyPid);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         waitpid(wpeProxyPid, &status, 0);   
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
-
-   printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return 0;
 }
 
 int WPEDriver::WpeCreateView ( ) {
 
     int ret = 0;
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     ret = pthread_create(&WpeDriverThreadId, NULL, RunWpeProxy, this);
     if (ret != 0)
         printf("Can't start RunWpeProxy Thread\n");
@@ -91,15 +88,15 @@ int WPEDriver::WpeCreateView ( ) {
          
     //Send message for CreateView
     WPE_SEND_COMMAND (WD_CREATE_VIEW, "")
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     WPE_WAIT_FOR_STATUS(ret);
 
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return ret;
 }
 
 bool WPEDriver::isUrlSupported (const std::string& mimeType) {
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 #if 0 
    if (WpeDriverImpl)
         return WpeDriverImpl->isUrlSupported(mimeType);
@@ -108,61 +105,107 @@ bool WPEDriver::isUrlSupported (const std::string& mimeType) {
         return true;//false;
 }
 
-void WPEDriver::WpeLoadURL(const std::string* url) {
+int WPEDriver::WpeLoadURL(const std::string* url) {
     int ret = 0;
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (WpeHandle) {
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_LOAD_URL, url->c_str());
         WPE_WAIT_FOR_STATUS(ret);
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     else
         printf("View doesn't exist\n");
 
-    return;
+    return ret;
 }
 
-void WPEDriver::WpeReload () {
+int WPEDriver::WpeReload () {
     int ret = 0;
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (WpeHandle) {
         //Send Reload Command
         WPE_SEND_COMMAND(WD_RELOAD, "");
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         WPE_WAIT_FOR_STATUS(ret);
-
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     else
-        printf("View doesn't exisit\n");
+        printf("View doesn't exist\n");
 
-    return;
+    return ret;
 }
 
-void WPEDriver::WpeGetURL(std::string* url) {
+int WPEDriver::WpeFindElement(std::string* arg, std::string* output) {
     int ret = 0;
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+
     if (WpeHandle) {
-        printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+        WPE_SEND_COMMAND(WD_FIND_ELEMENT, arg->c_str());
+        WPE_WAIT_FOR_STATUS(ret);
+        if (!ret) { //success
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            output->assign(stsBuff.rspMsg);
+        }
+    }
+    else
+        printf("View doesn't exist\n");
+    return ret;
+}
+
+int WPEDriver::WpeFindElements(std::string* arg, std::string* output) {
+    int ret = 0;
+
+    if (WpeHandle) {
+        WPE_SEND_COMMAND(WD_FIND_ELEMENTS, arg->c_str());
+        WPE_WAIT_FOR_STATUS(ret);
+        if (!ret) { //success
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            output->assign(stsBuff.rspMsg);
+        }
+    }
+    else
+        printf("View doesn't exist\n");
+    return ret;
+}
+
+int WPEDriver::WpeGetAttribute(std::string* arg, std::string* output) {
+    int ret = 0;
+
+    if (WpeHandle) {
+        WPE_SEND_COMMAND(WD_GET_ATTRIBUTE, arg->c_str());
+        WPE_WAIT_FOR_STATUS(ret);
+        if (!ret) { //success
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            output->assign(stsBuff.rspMsg);
+        }
+    }
+    else
+        printf("View doesn't exist\n");
+    return ret;
+}
+
+int WPEDriver::WpeGetURL(std::string* url) {
+    int ret = 0;
+    if (WpeHandle) {
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_GET_URL, "");
         WPE_WAIT_FOR_STATUS(ret);
         if (!ret) { //success
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
-            url->assign(stsBuff.rspMsg); 
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            url->assign(stsBuff.rspMsg);
         }
     }
     else
         printf("View doesn't exist\n");
 
-    return;
+    return ret;
 }
 
-void WPEDriver::WpeRemoveView () {
+int WPEDriver::WpeRemoveView () {
     int ret = 0;
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (WpeHandle) {
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_REMOVE_VIEW, "");
@@ -177,7 +220,7 @@ void WPEDriver::WpeRemoveView () {
     else
         printf("View already removed\n");
 
-    return;
+    return ret;
 }
 
 int CreateWpeView ( void **handle) {
@@ -189,39 +232,39 @@ int CreateWpeView ( void **handle) {
 }
 
 void* GetWpeViewHandle () {
-   printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
+   printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
    if (WpeHandle)
        return WpeHandle;
    else
        return NULL;
 }
 
-int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg) {
+int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg, void* ret) {
 
+    int retStatus = 0;
     if (!handle)
     {
         printf ("Invalid handle\n");
     }
     WPEDriver* WpeDriver = (WPEDriver*) handle;
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     switch (command) {
         case WPE_WD_LOAD_URL:{
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
-            WpeDriver->WpeLoadURL((const std::string*) arg);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            retStatus = WpeDriver->WpeLoadURL((const std::string*) arg);
             break;
         }
         case WPE_WD_RELOAD:{
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
-            WpeDriver->WpeReload();
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            retStatus = WpeDriver->WpeReload();
             break;
         }
         case WPE_WD_REMOVE_VIEW: {
             WpeDriver->WpeRemoveView();
              
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             delete WpeHandle;
-            printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
             WpeHandle = NULL;
             break;
         }
@@ -230,12 +273,25 @@ int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg) {
             break;
         }
         case WPE_WD_GET_URL: {
-            WpeDriver->WpeGetURL((std::string*)arg);
+            retStatus = WpeDriver->WpeGetURL((std::string*)ret);
+            break;
+        }
+        case WPE_WD_FIND_ELEMENT: {
+            retStatus = WpeDriver->WpeFindElement((std::string*)arg, (std::string*)ret);
+            break;
+        }
+        case WPE_WD_FIND_ELEMENTS: {
+            retStatus = WpeDriver->WpeFindElements((std::string*)arg, (std::string*)ret);
+            break;
+        }
+        case WPE_WD_GET_ATTRIBUTE: {
+            retStatus = WpeDriver->WpeGetAttribute((std::string*)arg, (std::string*)ret);
+            break;
         }
         default:
             break;
     }
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__); 
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
-    return 0;
+    return retStatus;
 }

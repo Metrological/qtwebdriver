@@ -25,26 +25,24 @@ bool WpeViewUtil::isUrlSupported(const std::string& url, Error 	**error) {
 
 std::string WpeViewUtil::extractClassName(const std::string& url) {
     const std::string widget_prefix(url_protocol);	
-    printf("\n:%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return url.substr(widget_prefix.length());
 }
 
 std::string WpeViewUtil::makeUrlByClassName(const std::string& className) {
     const std::string widget_prefix(url_protocol);
-    printf("\n:%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return widget_prefix + className;	
 }
 
 void* WpeViewUtil::getWpeView(Session* session, const ViewId& viewId) {
 
-   printf("\n:%s:%s:%d\n", __FILE__, __func__, __LINE__);
-
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     ViewHandle* viewHandle =  session->GetViewHandle(viewId);
   
     if (NULL == viewHandle) 
         return NULL;
-     printf("\n:%s:%s:%d\n", __FILE__, __func__, __LINE__);
-
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return viewHandle;
 
 }
