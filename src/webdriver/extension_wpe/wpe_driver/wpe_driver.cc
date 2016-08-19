@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 TATA ELXSI
+ * Copyright (C) 2016 Metrological
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -12,42 +39,42 @@
 void* WpeHandle = NULL;
 
 #define WPE_SEND_COMMAND(cmd, msg)     \
-    {                                      \
-        cmdBuff.command = cmd;             \
-        strcpy(cmdBuff.message, msg);  \
-        if ((msgsnd(cmdQueueId, &cmdBuff, WD_CMD_SIZE, 0 )) < 0) { \
-            printf ("Error in send command %d, Error no: %s\n", cmd, strerror(errno)); \
-        }                                               \
-    }
+{                                      \
+    cmdBuff.command = cmd;             \
+    strcpy(cmdBuff.message, msg);  \
+    if ((msgsnd(cmdQueueId, &cmdBuff, WD_CMD_SIZE, 0 )) < 0) { \
+        printf ("Error in send command %d, Error no: %s\n", cmd, strerror(errno)); \
+    }                                               \
+}
 #define WPE_WAIT_FOR_STATUS(retStatus)  \
-    {                       \
-         printf("WPE_WAIT %s:%s:%d\n",__FILE__, __func__, __LINE__); \
-         if ((msgrcv(stsQueueId, &stsBuff, WD_STATUS_SIZE, 0, 0) >= 0)) { \
-             if (WD_SUCCESS == stsBuff.status)          \
-                 printf("Command executed successfully %d\n", stsBuff.status); \
-             else                                           \
-             {                                              \
-                 printf("Error in command execution %d\n", stsBuff.status); \
-                 retStatus =  stsBuff.status;               \
-             }                                              \
-         }                                                  \
-         printf ("Message Receive Status : %s\n", strerror(errno)); \
-    }
-
-WPEDriver::WPEDriver() 
-         : WpeDriverThreadId(0) {
-    
+{                       \
+    printf("WPE_WAIT %s:%s:%d\n",__FILE__, __func__, __LINE__); \
+    if ((msgrcv(stsQueueId, &stsBuff, WD_STATUS_SIZE, 0, 0) >= 0)) { \
+         if (WD_SUCCESS == stsBuff.status)          \
+             printf("Command executed successfully %d\n", stsBuff.status); \
+         else                                           \
+         {                                              \
+             printf("Error in command execution %d\n", stsBuff.status); \
+             retStatus =  stsBuff.status;               \
+         }                                              \
+     }                                                  \
+     printf ("Message Receive Status : %s\n", strerror(errno)); \
 }
 
+WPEDriver::WPEDriver() 
+    : WpeDriverThreadId(0) {
+    
+}
 
 WPEDriver::~WPEDriver() {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
-void* WPEDriver::RunWpeProxy(void *pArg) {
+void* WPEDriver::RunWpeProxy(void* pArg) {
     int status;
     pid_t wpeProxyPid;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+
     wpeProxyPid = fork();
     if (wpeProxyPid == 0) {
         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
@@ -67,8 +94,7 @@ void* WPEDriver::RunWpeProxy(void *pArg) {
     return 0;
 }
 
-int WPEDriver::WpeCreateView ( ) {
-
+int WPEDriver::WpeCreateView() {
     int ret = 0;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     
@@ -95,14 +121,14 @@ int WPEDriver::WpeCreateView ( ) {
     return ret;
 }
 
-bool WPEDriver::isUrlSupported (const std::string& mimeType) {
+bool WPEDriver::isUrlSupported(const std::string& mimeType) {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 #if 0 
-   if (WpeDriverImpl)
-        return WpeDriverImpl->isUrlSupported(mimeType);
+    if (WpeDriverImpl)
+        return WpeDriverImpl->isUrlSupported(mimeType); TODO enable once complete mimeType parsing
     else
 #endif
-        return true;//false;
+    return true;//false;
 }
 
 int WPEDriver::WpeLoadURL(const std::string* url) {
@@ -121,7 +147,7 @@ int WPEDriver::WpeLoadURL(const std::string* url) {
     return ret;
 }
 
-int WPEDriver::WpeReload () {
+int WPEDriver::WpeReload() {
     int ret = 0;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (WpeHandle) {
@@ -203,7 +229,7 @@ int WPEDriver::WpeGetURL(std::string* url) {
     return ret;
 }
 
-int WPEDriver::WpeRemoveView () {
+int WPEDriver::WpeRemoveView() {
     int ret = 0;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (WpeHandle) {
@@ -223,7 +249,7 @@ int WPEDriver::WpeRemoveView () {
     return ret;
 }
 
-int CreateWpeView ( void **handle) {
+int CreateWpeView(void **handle) {
     int ret = 0;
     WPEDriver* WpeDriver = new WPEDriver();
     ret = WpeDriver->WpeCreateView();
@@ -231,7 +257,7 @@ int CreateWpeView ( void **handle) {
     return ret;
 }
 
-void* GetWpeViewHandle () {
+void* GetWpeViewHandle() {
    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
    if (WpeHandle)
        return WpeHandle;
@@ -239,7 +265,7 @@ void* GetWpeViewHandle () {
        return NULL;
 }
 
-int ExecuteCommand (void *handle, WPEDriverCommand command, void* arg, void* ret) {
+int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret) {
 
     int retStatus = 0;
     if (!handle)

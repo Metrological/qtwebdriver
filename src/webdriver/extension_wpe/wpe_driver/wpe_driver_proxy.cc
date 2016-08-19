@@ -1,3 +1,30 @@
+/*
+ * Copyright (C) 2016 TATA ELXSI
+ * Copyright (C) 2016 Metrological
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/types.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
@@ -12,7 +39,7 @@
 #include "extension_wpe/wpe_driver/wpe_driver_proxy.h"
 
 using std::unique_ptr;
-
+/*transfer callback msg to WebDriverProxy */
 std::string respMsg;
 sem_t  jsRespWait;
 
@@ -89,7 +116,7 @@ static WKContextInjectedBundleClientV1 _handlerInjectedBundle = {
 };
 
 WPEDriverProxy::WPEDriverProxy()
-              : requestID_(1)
+    : requestID_(1)
 {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
@@ -110,7 +137,7 @@ static void AutomationCallback(WKStringRef wkRspMsg) {
     sem_post(&jsRespWait);
 }
 
-WDStatus WPEDriverProxy::CreateView () {
+WDStatus WPEDriverProxy::CreateView() {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     WDStatus ret = WD_SUCCESS;
     if (0 != (pthread_create(&WpeViewThreadId_, NULL, RunWpeView, this ))) {
@@ -121,7 +148,7 @@ WDStatus WPEDriverProxy::CreateView () {
     return ret; 
 }
 
-void* WPEDriverProxy::RunWpeView (void *arg){
+void* WPEDriverProxy::RunWpeView(void* arg){
 
     WPEDriverProxy *pWpeDriverProxy =  (WPEDriverProxy*) arg;
 
@@ -184,13 +211,9 @@ void* WPEDriverProxy::RunWpeView (void *arg){
     WKPageSetPageNavigationClient(pWpeDriverProxy->page_, &s_navigationClient.base);
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    auto shellURL = WKURLCreateWithUTF8CString("http://www.google.com");
-    WKPageLoadURL(pWpeDriverProxy->page_, shellURL);
-    WKRelease(shellURL);
-
+    
     //Create Automation session
     pWpeDriverProxy->webAutomationSession_ = WKWebAutomationSessionCreate(pWpeDriverProxy->context_, pWpeDriverProxy->page_);
-    //WKPageSetControlledByAutomation(pWpeDriverProxy->page_, true); 
     pWpeDriverProxy->CreateBrowsingContext();
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
@@ -270,7 +293,7 @@ void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleSt
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
-void WPEDriverProxy::ExecuteJSCommand(const  char* methodName, const char* handleStr,
+void WPEDriverProxy::ExecuteJSCommand(const char* methodName, const char* handleStr,
                                       const char* jsScript, const char* argList) {
     std::string command;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
@@ -279,7 +302,7 @@ void WPEDriverProxy::ExecuteJSCommand(const  char* methodName, const char* handl
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
-WDStatus WPEDriverProxy::ParseJSResponse(const char *response, char *attrib, std::string& attribValue) {
+WDStatus WPEDriverProxy::ParseJSResponse(const char* response, char* attrib, std::string& attribValue) {
     WDStatus ret = WD_FAILURE;
     json_object *jsObj;
     jsObj = json_tokener_parse(response);
@@ -333,7 +356,7 @@ WDStatus WPEDriverProxy::GetURL(char *url) {
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::GetAttribute(const char *reqParams, char *value) {
+WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
     char script[100];
     std::string element, key;
     json_object *jsElement, *jsKey;
@@ -366,7 +389,7 @@ WDStatus WPEDriverProxy::GetAttribute(const char *reqParams, char *value) {
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElement(bool isElements, const char *reqParams, char *element) {
+WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, char* element) {
     std::string tmpResponse;
     std::string locator, query, rootElement;
     json_object *jsLocator, *jsQuery, *jsRootElement;
@@ -405,7 +428,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char *reqParams, cha
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementById(const char *rootElement, const char *query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementById(const char* rootElement, const char* query, std::string& element) {
     char script[100];
 
     WDStatus retStatus = WD_FAILURE;
@@ -423,7 +446,7 @@ WDStatus WPEDriverProxy::FindElementById(const char *rootElement, const char *qu
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByName(const char *rootElement, const char *query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* query, std::string& element) {
     char script[100];
 
     WDStatus retStatus = WD_FAILURE;
@@ -441,7 +464,7 @@ WDStatus WPEDriverProxy::FindElementByName(const char *rootElement, const char *
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char *rootElement, const char *query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element) {
     char script[400];
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
@@ -477,7 +500,7 @@ WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char *rootEle
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char *rootElement, const char *query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element) {
     char script[100], function[20];
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
@@ -505,7 +528,7 @@ void WPEDriverProxy::RemoveView() {
     pthread_join (WpeViewThreadId_, NULL);
 }
 
-void* WPECommandDispatcherThread (void* pArgs)
+void* WPECommandDispatcherThread(void* pArgs)
 {
     WDStatusBuf  stsBuf;
     WDCommandBuf cmdBuf;
@@ -533,7 +556,7 @@ void* WPECommandDispatcherThread (void* pArgs)
                 case WD_CREATE_VIEW: {
                     stsBuf.status = WPEProxy->CreateView();
                     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-                    sleep(5);
+                    sleep(2);
                     break;
                 }
                 case WD_REMOVE_VIEW: {

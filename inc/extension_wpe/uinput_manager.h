@@ -1,63 +1,32 @@
-/****************************************************************************
-**
-** Copyright © 1992-2014 Cisco and/or its affiliates. All rights reserved.
-** All rights reserved.
-** 
-** $CISCO_BEGIN_LICENSE:LGPL$
-**
-** GNU Lesser General Public License Usage
-** Alternatively, this file may be used under the terms of the GNU Lesser
-** General Public License version 2.1 as published by the Free Software
-** Foundation and appearing in the file LICENSE.LGPL included in the
-** packaging of this file.  Please review the following information to
-** ensure the GNU Lesser General Public License version 2.1 requirements
-** will be met: http://www.gnu.org/licenses/old-licenses/lgpl-2.1.html.
-**
-** $CISCO_END_LICENSE$
-**
-****************************************************************************/
-
-/*! \file uinput_manager.h
-    \page UInput manager
-  UInput manager - WebDriver module, which allows sending events to Linux OS.
-  UInput manager register new device as /dev/uinput and transmit events through it.
-
-  Currently supported keys for Remote Control:
-    0xE000U   POWER
-    0xEF00U   MENU
-    0xE002U   BACK
-    0xE100U    UP
-    0xE101U    DOWN
-    0xE102U    LEFT
-    0xE103U    RIGHT
-    0xE001U    OK
-    0xE00EU    INFO
-    0xE00FU    TEXT
-    0xE403U    RECOERD
-    0xE402U    STOP
-    0xE301U    ONE
-    0xE302U    TWO
-    0xE303U    THREE
-    0xE304U    FOUR
-    0xE305U    FIVE
-    0xE306U    SIX
-    0xE307U    SEVEN
-    0xE308U    EIGHT
-    0xE309U    NINE
-    0xE300U    ZERO
-    0xEE01U    COMPANION_DEVICE_KEY_LIVE_SWIPE
-    0xEE02U    COMPANION_DEVICE_KEY_VOD_SWIPE
-    0xEE03U    COMPANION_DEVICE_KEY_PAD_UP
-    0xEE04U    COMPANION_DEVICE_KEY_PAD_DOWN
-    0xEE05U    COMPANION_DEVICE_KEY_PAD_LEFT
-    0xEE06U    COMPANION_DEVICE_KEY_PAD_RIGHT
-*/
+/*
+ * Copyright (C) 2016 TATA ELXSI
+ * Copyright (C) 2016 Metrological
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A
+ * PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 #ifndef UINPUT_MANAGER_H
 #define UINPUT_MANAGER_H
-
-#ifdef OS_LINUX
-
 
 #include "webdriver_logging.h"
 
@@ -103,16 +72,14 @@ public:
 private:
     UInputManager();
     void registerHandledKeys();
-    int injectSynEvent();
+    int  injectSynEvent();
 
 private:
-    int _deviceDescriptor;
+    int    _deviceDescriptor;
     Logger *_logger;
-    bool _isReady;
+    bool   _isReady;
 
     static UInputManager* _instance;
 };
-
-#endif // OS_LINUX
 
 #endif // UINPUT_MANAGER_H
