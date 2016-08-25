@@ -42,6 +42,9 @@
         '-std=c++11',
       ],
 
+      'dependencies': [
+          'base.gyp:chromium_base_shared',
+      ],
       'sources': [
         'src/webdriver/extension_wpe/wpe_driver/wpe_driver_proxy.cc',
       ],
