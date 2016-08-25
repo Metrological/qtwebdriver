@@ -37,11 +37,21 @@
 
 #include "extension_wpe/wpe_driver/wpe_driver_common.h"
 #include "extension_wpe/wpe_driver/wpe_driver_proxy.h"
+#include "third_party/webdriver/atoms.h"
+#include "base/stringprintf.h"
 
 using std::unique_ptr;
+using namespace webdriver;
+
 /*transfer callback msg to WebDriverProxy */
 std::string respMsg;
 sem_t  jsRespWait;
+
+#define WD_REMOVE_QUOTES(str) \
+if (str.front() == '"') {     \
+    str.erase(0, 1);          \
+    str.erase(str.size() - 1);\
+}
 
 WKPageNavigationClientV0 s_navigationClient = {
     { 0, nullptr },
@@ -116,7 +126,8 @@ static WKContextInjectedBundleClientV1 _handlerInjectedBundle = {
 };
 
 WPEDriverProxy::WPEDriverProxy()
-    : requestID_(1)
+    : WpeViewThreadId_ (0),
+      requestID_(1)
 {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
@@ -124,6 +135,7 @@ WPEDriverProxy::WPEDriverProxy()
 WPEDriverProxy::~WPEDriverProxy()
 {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    RemoveView();
 }
 
 static void AutomationCallback(WKStringRef wkRspMsg) {
@@ -187,7 +199,7 @@ void* WPEDriverProxy::RunWpeView(void* arg){
 
     // By default allow console log messages to system console reporting.
     if (!g_getenv("WPE_SHELL_DISABLE_CONSOLE_LOG"))
-      WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(pWpeDriverProxy->preferences_, true);
+        WKPreferencesSetLogsPageMessagesToSystemConsoleEnabled(pWpeDriverProxy->preferences_, true);
 
     WKPageGroupSetPreferences(pWpeDriverProxy->pageGroup_, pWpeDriverProxy->preferences_);
 
@@ -197,11 +209,11 @@ void* WPEDriverProxy::RunWpeView(void* arg){
     WKPreferencesSetFullScreenEnabled(pWpeDriverProxy->preferences_, true);
 
     if (!!g_getenv("WPE_SHELL_COOKIE_STORAGE")) {
-      gchar *cookieDatabasePath = g_build_filename(g_get_user_cache_dir(), "cookies.db", nullptr);
-      auto path = WKStringCreateWithUTF8CString(cookieDatabasePath);
-      g_free(cookieDatabasePath);
-      auto cookieManager = WKContextGetCookieManager(pWpeDriverProxy->context_);
-      WKCookieManagerSetCookiePersistentStorage(cookieManager, path, kWKCookieStorageTypeSQLite);
+        gchar *cookieDatabasePath = g_build_filename(g_get_user_cache_dir(), "cookies.db", nullptr);
+        auto path = WKStringCreateWithUTF8CString(cookieDatabasePath);
+        g_free(cookieDatabasePath);
+        auto cookieManager = WKContextGetCookieManager(pWpeDriverProxy->context_);
+        WKCookieManagerSetCookiePersistentStorage(cookieManager, path, kWKCookieStorageTypeSQLite);
     }
 
     pWpeDriverProxy->view_ = WKViewCreate(pWpeDriverProxy->pageConfiguration_);
@@ -357,31 +369,40 @@ WDStatus WPEDriverProxy::GetURL(char *url) {
 }
 
 WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
-    char script[100];
     std::string element, key;
-    json_object *jsElement, *jsKey;
-    json_object *jsObj = json_tokener_parse(reqParams);
     WDStatus retStatus = WD_FAILURE;
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    if (json_object_object_get_ex(jsObj, "element", &jsElement)) {
-        element.assign(json_object_get_string(jsElement));
-        if (json_object_object_get_ex(jsObj, "key", &jsKey)) {
-            key.assign(json_object_get_string(jsKey));
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    json_object *jObj = json_tokener_parse(reqParams);
+    if (NULL != jObj) {
+        json_object *jIdxObj;
+        int elementSize = json_object_array_length(jObj);
+        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+        if (2 == elementSize) {
+            jIdxObj = json_object_array_get_idx(jObj, 0); //Element Id
+            if (jIdxObj) {
+                element.assign(json_object_get_string(jIdxObj));
+            }
+            jIdxObj = json_object_array_get_idx(jObj, 1); //Key
+            if (jIdxObj) {
+                key.assign(json_object_get_string(jIdxObj));
+            }
         }
     }
 
+    std::string elementNode, script;
+    script = base::StringPrintf("function (e) { return e.%s }", key.c_str());
+    elementNode = base::StringPrintf("{\"%s\":\"%s\"}", WPE_SESSION_IDENTIFIER, element.c_str());
+
     std::string tmpResponse;
-    sprintf(script, "function () { return {\"session-node-Untitled Session\":\"%s\"}.%s }", element.c_str(), key.c_str());
-    //sprintf(script, "function () { var x = {\"session-node-Untitled Session\":\"%s\"}; return x.%s; }", element.c_str(), key.c_str());
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script, "");
+                     script.c_str(), elementNode.c_str());
 
-    printf("%s:%s:%d \n\n script = %s \n", __FILE__, __func__, __LINE__, script);
     sem_wait(&jsRespWait);
+
     retStatus = ParseJSResponse(respMsg.c_str(), "result", tmpResponse);
+    WD_REMOVE_QUOTES(tmpResponse);
     if (retStatus == WD_SUCCESS)
         strcpy(value, tmpResponse.c_str());
 
@@ -402,11 +423,13 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
         if (json_object_object_get_ex(jsObj, "query", &jsQuery)) {
             query.assign(json_object_get_string(jsQuery));
             if (json_object_object_get_ex(jsObj, "rootElement", &jsRootElement)) {
-                rootElement.assign(json_object_get_string(jsRootElement));
-                rootElement.append(".");
+                rootElement = base::StringPrintf("{\"%s\":\"%s\"}",
+                                                 WPE_SESSION_IDENTIFIER,
+                                                 json_object_get_string(jsRootElement));
             }
         }
     }
+
     if (!strcmp(locator.c_str(),"id")) {
         printf("%s:%s:%d locator:id \n", __FILE__, __func__, __LINE__);
         retStatus = FindElementById(rootElement.c_str(), query.c_str(), tmpResponse);
@@ -429,16 +452,20 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
 }
 
 WDStatus WPEDriverProxy::FindElementById(const char* rootElement, const char* query, std::string& element) {
-    char script[100];
+    std::string script;
 
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
-    sprintf(script,  "function () { return %sdocument.getElementById(\"%s\"); }",rootElement, query);
+    if (strcmp(rootElement, "")) {
+        script =  base::StringPrintf("function(e) { return e.document.getElementById(\"%s\"); }", query);
+    } else {
+        script =  base::StringPrintf("function() { return document.getElementById(\"%s\"); }", query);
+    }
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script,
-                     "");
+                     script.c_str(),
+                     rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -447,16 +474,21 @@ WDStatus WPEDriverProxy::FindElementById(const char* rootElement, const char* qu
 }
 
 WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* query, std::string& element) {
-    char script[100];
+    std::string script;
 
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
-    sprintf(script,  "function () { return %sdocument.getElementsByName(\"%s\"); }",rootElement, query);
+    if (strcmp(rootElement, "")) {
+        script =  base::StringPrintf("function(e) { return e.document.getElementsByName(\"%s\"); }", query);
+    } else {
+        script =  base::StringPrintf("function() { return document.getElementsByName(\"%s\"); }", query);
+    }
+
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script,
-                     "");
+                     script.c_str(),
+                     rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -465,34 +497,36 @@ WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* 
 }
 
 WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element) {
-    char script[400];
+    std::string script, rootArg, link;
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
+    rootArg.assign(strcmp(rootElement, "")?"e":"");
+    link.assign(strcmp(rootElement, "")?".":"");
     if (isElements) {
-        sprintf(script,
-                "function () { \
+        script = base::StringPrintf(
+                "function (%s) { \
                      var aResult = new Array();\
-                     var a = %sdocument.evaluate(\"%s\", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
+                     var a = %s%sdocument.evaluate(\"%s\", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
                      for ( var i = 0 ; i < a.snapshotLength ; i++ ) {\
                           aResult.push(a.snapshotItem(i));\
                      }\
                      return aResult;\
                 }",
-                rootElement, query);
+                rootArg.c_str(), rootArg.c_str(), link.c_str(), query);
     }
     else {
-        sprintf(script,
-               "function () {\
-                   var elem = %sdocument.evaluate(\"%s\", document, null, XPathResult.ANY_TYPE, null ); \
+        script = base::StringPrintf(
+               "function (%s) {\
+                   var elem = %s%sdocument.evaluate(\"%s\", document, null, XPathResult.ANY_TYPE, null ); \
                    return elem.iterateNext();\
                }",
-               rootElement, query);
+               rootArg.c_str(), rootArg.c_str(), link.c_str(), query);
     }
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script,
-                     "");
+                     script.c_str(),
+                     rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -501,16 +535,20 @@ WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootEle
 }
 
 WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element) {
-    char script[100], function[20];
+    std::string script, function, rootArg, link;
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
-    strcpy(function, (isElements? "querySelectorAll":"querySelector"));
-    sprintf(script,  "function () { return %sdocument.%s(\"%s\") }", rootElement, function, query);
+    function.assign(isElements? "querySelectorAll":"querySelector");
+    rootArg.assign(strcmp(rootElement, "")?"e":"");
+    link.assign(strcmp(rootElement, "")?".":"");
+
+    script = base::StringPrintf("function (%s) { return %s%sdocument.%s(\"%s\") }",
+                                rootArg.c_str(), rootArg.c_str(), link.c_str(), function.c_str(), query);
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script,
-                     "");
+                     script.c_str(),
+                     rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -525,7 +563,10 @@ void WPEDriverProxy::RemoveView() {
         g_main_loop_unref(loop_);
     }
     WDStatus_ = WPE_WD_STOP;
-    pthread_join (WpeViewThreadId_, NULL);
+    if (WpeViewThreadId_) {
+        pthread_join (WpeViewThreadId_, NULL);
+        WpeViewThreadId_ = 0;
+    }
 }
 
 void* WPECommandDispatcherThread(void* pArgs)
@@ -609,8 +650,8 @@ void* WPECommandDispatcherThread(void* pArgs)
     }
 
     printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
-//    msgctl(cmdQueueId, IPC_RMID, NULL);
-//    msgctl(stsQueueId, IPC_RMID, NULL);
+    msgctl(cmdQueueId, IPC_RMID, NULL);
+    msgctl(stsQueueId, IPC_RMID, NULL);
 
     return 0;
 }

@@ -1,10 +1,7 @@
 #include <iostream>
-#include "base/at_exit.h"
 #include "webdriver_server.h"
 #include "webdriver_view_transitions.h"
 #include "versioninfo.h"
-#include "webdriver_route_table.h"
-#include "shutdown_command.h"
 #include "webdriver_route_patterns.h"
 #include "extension_wpe/uinput_manager.h"
 #include "extension_wpe/uinput_event_dispatcher.h"
@@ -27,7 +24,6 @@ int main(int argc, char *argv[])
 {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     GMainLoop* loop = g_main_loop_new(NULL, FALSE);
-    base::AtExitManager exit;
     CommandLine cmd_line(CommandLine::NO_PROGRAM);
     cmd_line.InitFromArgv(argc, argv);
 
@@ -47,14 +43,6 @@ int main(int argc, char *argv[])
         return 1;
     }
     std::cout << "Got webdriver server instance..." << std::endl;
-
-    /* Example how to add a custom command */
-    webdriver::RouteTable *routeTableWithShutdownCommand = new webdriver::RouteTable(wd_server->GetRouteTable());
-    const char shutdownCommandRoute[] = "/-cisco-shutdown";
-    routeTableWithShutdownCommand->Add<webdriver::ShutdownCommand>(shutdownCommandRoute);
-    routeTableWithShutdownCommand->Add<webdriver::ShutdownCommand>(webdriver::CommandRoutes::kShutdown);
-    wd_server->SetRouteTable(routeTableWithShutdownCommand);
-    printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
 
     InitUInputClient();
 

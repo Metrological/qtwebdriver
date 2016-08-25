@@ -29,6 +29,7 @@
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #include <sys/wait.h>
+#include <sys/prctl.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -62,7 +63,9 @@ void* WpeHandle = NULL;
 }
 
 WPEDriver::WPEDriver() 
-    : WpeDriverThreadId(0) {
+    : cmdQueueId(0),
+      stsQueueId(0),
+      WpeDriverThreadId(0) {
     
 }
 
@@ -73,23 +76,38 @@ WPEDriver::~WPEDriver() {
 void* WPEDriver::RunWpeProxy(void* pArg) {
     int status;
     pid_t wpeProxyPid;
+    WPEDriver *wpeDriver = (WPEDriver *) pArg;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
+    if ((wpeDriver->cmdQueueId = msgget(WPE_WD_CMD_KEY, IPC_CREAT | 0666)) < 0) {
+         printf("Error in message queue creation \n");
+         return 0;
+    }
+    if ((wpeDriver->stsQueueId = msgget(WPE_WD_STATUS_KEY, IPC_CREAT | 0666)) < 0) {
+         printf("Error in message queue creation \n");
+         return 0;
+    }
+
     wpeProxyPid = fork();
-    if (wpeProxyPid == 0) {
+    if (0 == wpeProxyPid) {
         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        prctl(PR_SET_PDEATHSIG, SIGTERM);
         int execStatus = execl ("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", NULL);
         if (execStatus ==-1) {
             printf ("Error in loading WPEProxy\n");
         }
         return 0;
-    } else if (wpeProxyPid < 0) {
+    } else if (0 > wpeProxyPid) {
         printf ("Failed start WPEProxy\n");
     } else { 
         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         waitpid(wpeProxyPid, &status, 0);   
         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
+    msgctl(wpeDriver->cmdQueueId, IPC_RMID, NULL);
+    msgctl(wpeDriver->stsQueueId, IPC_RMID, NULL);
+
+    wpeDriver->cmdQueueId = wpeDriver->stsQueueId = 0;
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return 0;
 }
@@ -101,22 +119,20 @@ int WPEDriver::WpeCreateView() {
     ret = pthread_create(&WpeDriverThreadId, NULL, RunWpeProxy, this);
     if (ret != 0)
         printf("Can't start RunWpeProxy Thread\n");
- 
-    if ((cmdQueueId = msgget(WPE_WD_CMD_KEY, IPC_CREAT | 0666)) < 0) {
-         printf("Error in message queue creation \n");
-         return 0;
-    } 
 
-    if ((stsQueueId = msgget(WPE_WD_STATUS_KEY, IPC_CREAT | 0666)) < 0) {
-         printf("Error in message queue creation \n");
-         return 0;
-    }
-         
-    //Send message for CreateView
-    WPE_SEND_COMMAND (WD_CREATE_VIEW, "")
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    WPE_WAIT_FOR_STATUS(ret);
-
+    do { // Wait till the Queues are created
+        if (stsQueueId) {
+            //Send message for CreateView
+            WPE_SEND_COMMAND (WD_CREATE_VIEW, "")
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            WPE_WAIT_FOR_STATUS(ret);
+            break;
+        } else {
+            printf("%s:%s:%d Queue is not yet created \n", __FILE__, __func__, __LINE__);
+            sleep(1);
+            // queues not created */
+        }
+    } while(1);
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return ret;
 }
@@ -238,8 +254,6 @@ int WPEDriver::WpeRemoveView() {
         WPE_WAIT_FOR_STATUS(ret);
 
         //pthread_join (WpeDriverThreadId, NULL);
-        msgctl(cmdQueueId, IPC_RMID, NULL);
-        msgctl(stsQueueId, IPC_RMID, NULL);
         WpeHandle = NULL;
         cmdQueueId = stsQueueId = 0;
     }
@@ -290,7 +304,7 @@ int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret)
             WpeDriver->WpeRemoveView();
              
             printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-            delete WpeHandle;
+            delete(WPEDriver*)WpeHandle;
             WpeHandle = NULL;
             break;
         }

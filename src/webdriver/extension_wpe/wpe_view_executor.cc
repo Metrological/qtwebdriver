@@ -199,26 +199,27 @@ void WpeViewCmdExecutor::ClickElement(const ElementId& element, Error** error) {
 
 void WpeViewCmdExecutor::GetAttribute(const ElementId& element, const std::string& key, base::Value** value, Error** error) {
     int retStatus = 0;
-    Value *retValue;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    Value *retValue = NULL;
+    printf("%s:%s:%d key = %s \n", __FILE__, __func__, __LINE__, key.c_str());
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
 
-    json_object *jobj = json_object_new_object();
+    json_object *jarray = json_object_new_array();
     json_object *jelement = json_object_new_string((element.id()).c_str());
-    json_object_object_add(jobj, "element", jelement);
     json_object *jkey =  json_object_new_string(key.c_str());
-    json_object_object_add(jobj, "key", jkey);
-    arg.assign(json_object_to_json_string(jobj));
+
+    json_object_array_add(jarray, jelement);
+    json_object_array_add(jarray, jkey);
+
+    arg.assign(json_object_to_json_string(jarray));
     retStatus = ExecuteCommand(view_, WPE_WD_GET_ATTRIBUTE, (void*)&arg,  (void*) &ret);
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
         retValue =  Value::CreateStringValue(ret.c_str());
     }
-    else if(NULL == *error)
+    else if (NULL == *error)
         *error = new Error(kNoSuchElement);
 
-    if (NULL == value) {
+    if (NULL == retValue) {
         retValue = Value::CreateNullValue();
     }
 
@@ -298,15 +299,16 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
             printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
             for (int i = 0; i < elementSize; ++i) {
                 jIdxObj = json_object_array_get_idx(jObj, i);
-                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
-                if (json_object_object_get_ex(jIdxObj, "session-node-Untitled Session", &jElement)) {
-                    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-                    ElementId tmpElement(json_object_get_string(jElement));
-                    (*elements).push_back(tmpElement);
+                if (NULL != jObj) {
+                    if (json_object_object_get_ex(jIdxObj, WPE_SESSION_IDENTIFIER, &jElement)) {
+                        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+                        ElementId tmpElement(json_object_get_string(jElement));
+                        (*elements).push_back(tmpElement);
+                    }
                 }
             }
         }
-    } else if(NULL == *error)
+    } else if (NULL == *error)
         *error = new Error(kNoSuchElement);
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
@@ -319,6 +321,7 @@ void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::s
     CHECK(root_element.is_valid());
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
+    ElementId elementId;
     CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg);
 
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENT, (void*)&arg,  (void*) &ret);
@@ -327,16 +330,17 @@ void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::s
         json_object *jElement;
         json_object *jObj = json_tokener_parse(ret.c_str());
         if (NULL != jObj) {
-            if (json_object_object_get_ex(jObj, "session-node-Untitled Session", &jElement)) {
+            if (json_object_object_get_ex(jObj, WPE_SESSION_IDENTIFIER, &jElement)) {
                 printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                 ElementId elementId(json_object_get_string(jElement));
                 *element = elementId;
+                return;
             }
-        } else {
-            ElementId tmpElement;
-            *element = tmpElement;
         }
-    } else if(NULL == *error)
+    }
+
+    *element = elementId;
+    if(NULL == *error)
         *error = new Error(kNoSuchElement);
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);

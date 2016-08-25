@@ -189,7 +189,7 @@ protected:
     int k;
     int modState;
     string txt;
-    bool autor= true;
+    bool autor;
 };
 
 class KeyConverter {
