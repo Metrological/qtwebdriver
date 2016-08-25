@@ -391,7 +391,7 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
     }
 
     std::string elementNode, script;
-    script = base::StringPrintf("function (e) { return e.%s }", key.c_str());
+    script = base::StringPrintf("function (e) { return e.getAttribute('%s') }", key.c_str());
     elementNode = base::StringPrintf("{\"%s\":\"%s\"}", WPE_SESSION_IDENTIFIER, element.c_str());
 
     std::string tmpResponse;
