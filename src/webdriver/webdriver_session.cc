@@ -71,9 +71,13 @@ Session::~Session() {
 bool Session::InitActualCapabilities() {
     // Standard capabilities defined at
     // http://code.google.com/p/selenium/wiki/JsonWireProtocol#Capabilities_JSON_Object
+#ifdef WPE_WD_ENABLE
     capabilities_.caps->SetString(Capabilities::kBrowserName, "WPEWebkit");
     printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
-    // TODO: get version of WPE webkit?
+#else
+    capabilities_.caps->SetString(Capabilities::kBrowserName, "QtWebkit");
+#endif
+    // TODO: get version of webkit?
     //capabilities_value->SetString("version", session->GetBrowserVersion());
 
     capabilities_.caps->SetString(Capabilities::kPlatform, base::SysInfo::OperatingSystemName());
@@ -116,7 +120,7 @@ bool Session::InitActualCapabilities() {
 }
 
 bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilities_dict) {
-    printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
+    printf("%s:%s:%d Webkit \n", __FILE__, __func__, __LINE__);
 
     if (!CheckRequiredPlatform(capabilities_dict))
         return false;
@@ -172,7 +176,7 @@ bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilitie
 bool Session::CheckRequiredBrowser(const base::DictionaryValue* capabilities_dict) {
     std::string required_browser;
     std::string actual_browser;
-    printf("%s:%s:%d WPEWebkit \n", __FILE__, __func__, __LINE__);
+    printf("%s:%s:%d Webkit \n", __FILE__, __func__, __LINE__);
 
     if (capabilities_dict->GetString(Capabilities::kBrowserName, &required_browser)) {
         capabilities_.caps->GetString(Capabilities::kBrowserName, &actual_browser);

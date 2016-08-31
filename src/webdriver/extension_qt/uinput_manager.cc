@@ -21,10 +21,11 @@
 
 #if defined(OS_LINUX)
 
-#include "uinput_manager.h"
+#include "extension_qt/uinput_manager.h"
 
 #include <linux/input.h>
 #include <linux/uinput.h>
+#include <QtCore/qnamespace.h>
 #include <fcntl.h>
 #include <stdio.h>
 
@@ -105,7 +106,7 @@ bool UInputManager::registerUinputDevice()
     return true;
 }
 
-int UInputManager::injectKeyEvent(Void* event)
+int UInputManager::injectKeyEvent(QKeyEvent *event)
 {
     struct input_event ev;
     int res = -1;
@@ -122,7 +123,6 @@ int UInputManager::injectKeyEvent(Void* event)
     {
         ev.value = 0;
     }
-
     printf("#### Key code: %d\n", event->key());
     printf("#### Key text: %s, modifiers: %d\n", event->text().toStdString().c_str(), (int)event->modifiers());
     int key_text = event->text().toStdString().c_str()[0];
@@ -322,6 +322,7 @@ static int lookup_code(int keysym) {
     case Qt::Key_Delete:	return KEY_DELETE;
     case Qt::Key_Pause:     return KEY_PAUSE;
     case Qt::Key_Meta:      return KEY_LEFTMETA;
+
     default:		return keysym;
     }
 }
