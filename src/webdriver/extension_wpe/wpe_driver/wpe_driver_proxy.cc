@@ -264,13 +264,17 @@ WDStatus WPEDriverProxy::Reload() {
     return WD_SUCCESS;
 }
 
-bool WPEDriverProxy::isUrlSupported (const std::string& mimeType) {
-
+WDStatus WPEDriverProxy::IsUrlSupported (const char* mimeType) {
+    bool isUrlSupported = false;
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (NULL != page_) {
-        return true;// (WKPageCanShowMIMEType(page_, mimeType)); TODO enable this once implement mimetype parsing
-                                                             // support in wpe_view_utils.cc
+        isUrlSupported = WKPageCanShowMIMEType(page_, WKStringCreateWithUTF8CString(mimeType));
+        if (isUrlSupported){
+            return WD_SUCCESS;
+        }
     }
-    return false;
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    return WD_FAILURE;
 }
 
 void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleStr, const char* jsScript,
@@ -612,6 +616,12 @@ void* WPECommandDispatcherThread(void* pArgs)
                     stsBuf.status = WPEProxy->Reload();
                     break;
                 }
+                case WD_IS_URL_SUPPORTED: {
+                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    stsBuf.status = WPEProxy->IsUrlSupported(cmdBuf.message);
+                    break;
+                }
+
                 case WD_GET_URL: {
                     stsBuf.status = WPEProxy->GetURL(stsBuf.rspMsg);
                     break;

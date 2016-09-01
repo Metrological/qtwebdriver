@@ -137,14 +137,19 @@ int WPEDriver::WpeCreateView() {
     return ret;
 }
 
-bool WPEDriver::isUrlSupported(const std::string& mimeType) {
+bool WPEDriver::WpeIsUrlSupported(const char* mimeType, bool* status) {
+    int ret = 0;
+    *status = false;
+    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    if (WpeHandle) {
+        WPE_SEND_COMMAND(WD_IS_URL_SUPPORTED, mimeType);
+        WPE_WAIT_FOR_STATUS(ret);
+        if (!ret) {
+            *status = true;
+        }
+    }
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-#if 0 
-    if (WpeDriverImpl)
-        return WpeDriverImpl->isUrlSupported(mimeType); TODO enable once complete mimeType parsing
-    else
-#endif
-    return true;//false;
+    return ret;
 }
 
 int WPEDriver::WpeLoadURL(const std::string* url) {
@@ -309,7 +314,8 @@ int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret)
             break;
         }
         case WPE_WD_IS_URL_SUPPORTED: {
-            //WpeDriver->isUrlSupported(arg);
+            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            retStatus = WpeDriver->WpeIsUrlSupported((char *) arg, (bool*) ret);
             break;
         }
         case WPE_WD_GET_URL: {

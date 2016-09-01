@@ -25,6 +25,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <curl/curl.h>
+
 #include "wpe_view_util.h"
 #include "webdriver_session.h"
 #include "webdriver_util.h"
@@ -40,10 +42,44 @@ bool WpeViewUtil::isUrlSupported(void* pWpeView, const std::string& url, Error 	
         GlobalLogger::Log(kWarningLogLevel, " Invalid WpePage* ");
         return false;
     }
+
+    // Implementation of MimeType parser
     std::string mimeType;
-	
-    //TODO: implement mimeType parser
-    return true;//ExecuteCommand(pWpeView, WPE_WD_IS_URL_SUPPORTED, NULL);//WpeDriver->isUrlSupported(mimeType) ;
+
+    CURL *curl;
+    CURLcode res;
+
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    curl = curl_easy_init();
+    if(curl) {
+        char *tmpMimeType;
+        FILE *f = fopen("/dev/null", "w+");
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+        curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+        res = curl_easy_perform(curl);
+        fclose(f);
+
+        if(CURLE_OK == res) {
+            // ask for the content-type
+            res = curl_easy_getinfo(curl, CURLINFO_CONTENT_TYPE, &tmpMimeType);
+        }
+        if ( NULL != tmpMimeType ) {
+             mimeType.assign(tmpMimeType);
+        }
+        // always cleanup
+        curl_easy_cleanup(curl);
+    }
+
+    bool isUrlSupported = false;
+    if ( mimeType.empty() ) {
+        // Content Type is not specified, hence setting the return
+        // status as supportable URL
+        isUrlSupported = true;
+    } else {
+        ExecuteCommand(pWpeView, WPE_WD_IS_URL_SUPPORTED, (void*) mimeType.c_str(), &isUrlSupported);
+    }
+
+    return isUrlSupported;
 }	
 
 bool WpeViewUtil::isUrlSupported(const std::string& url, Error 	**error) {

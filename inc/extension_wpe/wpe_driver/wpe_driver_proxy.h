@@ -70,7 +70,7 @@ public:
     WDStatus GetURL(char* command);
     WDStatus GetAttribute(const char* reqParams, char* value);
     WDStatus FindElement(bool isElements, const char* reqParams, char* element);
-    bool     isUrlSupported(const std::string& mimeType);
+    WDStatus IsUrlSupported(const char* mimeType);
     void     RemoveView();
     static void* RunWpeView(void*);
 

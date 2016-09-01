@@ -55,7 +55,7 @@ public:
     int   WpeCreateView();
     void* GetViewHandle();
    
-    bool isUrlSupported(const std::string& mimeType);
+    bool WpeIsUrlSupported(const char* mimeType, bool* status);
     int WpeLoadURL(const std::string* url);
     int WpeReload();
     int WpeGetURL(std::string* url);
