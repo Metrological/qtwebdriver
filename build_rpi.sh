@@ -48,25 +48,6 @@ do
     python $GYP --depth . -G output_dir=. -D platform=$platform -D mode=$mode -D ROOT_PATH=${base_output_gen} -D WPE_DIR=${wpe_dir} --generator-output=${output_gen}/$platform/$mode wd.gyp
     [ $? -ne 0 ] && exit 1
 
-#    cd $OUTPUT_DIR
-#    [ $? -ne 0 ] && echo "**** ERROR: Can't access to $OUTPUT_DIR" && exit 1
-#    make
-#    [ $? -ne 0 ] && exit 1
-#    mkdir -p ${output_gen}/bin/$platform/$mode/
-#    [ $? -ne 0 ] && echo "**** ERROR: Can't create $OUTPUT_BIN_DIR" && exit 1
-
-    # copy libraries
-#    for file in $OUT_STATIC_LIB_FILES; do cp -f $OUTPUT_DIR_OUT/$file $OUTPUT_BIN_DIR 2>/dev/null; done
-#    for file in $OUT_SHARED_LIB_FILES; do cp -f $OUTPUT_DIR_OUT/lib.target/$file $OUTPUT_BIN_DIR 2>/dev/null; done
-
-    # copy test binaries
-#    for file in $OUT_BIN_FILES
-#    do
-#      if [ -f $OUTPUT_DIR_OUT/$file ]
-#      then
-#        cp -f $OUTPUT_DIR_OUT/$file $OUTPUT_BIN_DIR 2>/dev/null
-#      fi
-#    done
-    
   done
 done
+exit 0
