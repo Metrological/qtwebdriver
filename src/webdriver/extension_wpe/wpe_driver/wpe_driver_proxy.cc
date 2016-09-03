@@ -441,7 +441,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     } else if (!strcmp(locator.c_str(),"className")) {
         retStatus = FindElementByNameType(rootElement.c_str(), "ClassName", query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(),"tagName")) {
-        retStatus = FindElementByNameType(rootElement.c_str(), "TagName", query.c_str(), tmpResponse)
+        retStatus = FindElementByNameType(rootElement.c_str(), "TagName", query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(), "css")) {
         retStatus = FindElementByCss(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(), "xpath")) {
