@@ -48,6 +48,7 @@ void FindElementCommand::ExecutePost(Response* const response) {
     } else if (locator == "tag name") {
         locator = LocatorType::kTagName;
     }
+
     // The other locators do not need conversion. If the client supplied an
     // invalid locator, let it fail in the atom.
 

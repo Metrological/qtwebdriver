@@ -423,7 +423,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
 
     if (json_object_object_get_ex(jsObj, "locator", &jsLocator)) {
         locator.assign(json_object_get_string(jsLocator));
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        printf("%s:%s:%d %s \n", __FILE__, __func__, __LINE__, locator.c_str());
         if (json_object_object_get_ex(jsObj, "query", &jsQuery)) {
             query.assign(json_object_get_string(jsQuery));
             if (json_object_object_get_ex(jsObj, "rootElement", &jsRootElement)) {
@@ -435,19 +435,19 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     }
 
     if (!strcmp(locator.c_str(),"id")) {
-        printf("%s:%s:%d locator:id \n", __FILE__, __func__, __LINE__);
-        retStatus = FindElementById(rootElement.c_str(), query.c_str(), tmpResponse);
+        retStatus = FindElementById(query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(),"name")) {
-        printf("%s:%s:%d locator:name \n", __FILE__, __func__, __LINE__);
-        retStatus = FindElementByName(rootElement.c_str(), query.c_str(), tmpResponse);
+        retStatus = FindElementByName(query.c_str(), tmpResponse);
+    } else if (!strcmp(locator.c_str(),"className")) {
+        retStatus = FindElementByNameType(rootElement.c_str(), "ClassName", query.c_str(), tmpResponse);
+    } else if (!strcmp(locator.c_str(),"tagName")) {
+        retStatus = FindElementByNameType(rootElement.c_str(), "TagName", query.c_str(), tmpResponse)
     } else if (!strcmp(locator.c_str(), "css")) {
-        printf("%s:%s:%d locator:css \n", __FILE__, __func__, __LINE__);
         retStatus = FindElementByCss(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(), "xpath")) {
-        printf("%s:%s:%d locator:xpath \n", __FILE__, __func__, __LINE__);
-        retStatus = FindElementByXPath(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
+        retStatus = FindElementByXPath(isElements, query.c_str(), tmpResponse);
     } else {
-       printf("\n%s:%s:%d Invalid Query\n", __FILE__, __func__, __LINE__);
+       printf("\n%s:%s:%d Invalid Query Locator: %s \n", __FILE__, __func__, __LINE__, locator.c_str());
     }
 
     strcpy(element, tmpResponse.c_str());
@@ -455,17 +455,53 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementById(const char* rootElement, const char* query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementById(const char* query, std::string& element) {
     std::string script;
 
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
+    script =  base::StringPrintf("function() { return document.getElementById(\"%s\"); }", query);
+    ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
+                     "browsingContextHandle",
+                     script.c_str(), "");
+
+    sem_wait(&jsRespWait);
+    retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    return retStatus;
+}
+
+WDStatus WPEDriverProxy::FindElementByName(const char* query, std::string& element) {
+    std::string script;
+
+    WDStatus retStatus = WD_FAILURE;
+    printf("%s:%s:%d query = %s\n", __FILE__, __func__, __LINE__, query);
+
+    script =  base::StringPrintf("function() { return document.getElementsByName(\"%s\"); }", query);
+
+    ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
+                     "browsingContextHandle",
+                     script.c_str(), "");
+
+    sem_wait(&jsRespWait);
+    retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    return retStatus;
+}
+
+WDStatus WPEDriverProxy::FindElementByNameType(const char* rootElement, const char* type, const char* query, std::string& element) {
+    std::string script;
+
+    WDStatus retStatus = WD_FAILURE;
+    printf("%s:%s:%d query = %s root element = %s \n", __FILE__, __func__, __LINE__, query, rootElement);
+
     if (strcmp(rootElement, "")) {
-        script =  base::StringPrintf("function(e) { return e.document.getElementById(\"%s\"); }", query);
+        script =  base::StringPrintf("function(e) { return e.getElementsBy%s(\"%s\"); }", type, query);
     } else {
-        script =  base::StringPrintf("function() { return document.getElementById(\"%s\"); }", query);
+        script =  base::StringPrintf("function() { return document.getElementsBy%s(\"%s\"); }",type, query);
     }
+
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
                      script.c_str(),
@@ -477,60 +513,33 @@ WDStatus WPEDriverProxy::FindElementById(const char* rootElement, const char* qu
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* query, std::string& element) {
     std::string script;
-
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
-    if (strcmp(rootElement, "")) {
-        script =  base::StringPrintf("function(e) { return e.document.getElementsByName(\"%s\"); }", query);
-    } else {
-        script =  base::StringPrintf("function() { return document.getElementsByName(\"%s\"); }", query);
-    }
-
-    ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
-                     "browsingContextHandle",
-                     script.c_str(),
-                     rootElement);
-
-    sem_wait(&jsRespWait);
-    retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    return retStatus;
-}
-
-WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element) {
-    std::string script, rootArg, link;
-    WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
-
-    rootArg.assign(strcmp(rootElement, "")?"e":"");
-    link.assign(strcmp(rootElement, "")?".":"");
     if (isElements) {
         script = base::StringPrintf(
-                "function (%s) { \
+                "function () { \
                      var aResult = new Array();\
-                     var a = %s%sdocument.evaluate(\"%s\", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
+                     var a = document.evaluate(\"%s\", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
                      for ( var i = 0 ; i < a.snapshotLength ; i++ ) {\
                           aResult.push(a.snapshotItem(i));\
                      }\
                      return aResult;\
-                }",
-                rootArg.c_str(), rootArg.c_str(), link.c_str(), query);
+                }", query);
     }
     else {
         script = base::StringPrintf(
-               "function (%s) {\
-                   var elem = %s%sdocument.evaluate(\"%s\", document, null, XPathResult.ANY_TYPE, null ); \
+               "function () {\
+                   var elem = document.evaluate(\"%s\", document, null, XPathResult.ANY_TYPE, null ); \
                    return elem.iterateNext();\
-               }",
-               rootArg.c_str(), rootArg.c_str(), link.c_str(), query);
+               }", query);
     }
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
                      script.c_str(),
-                     rootElement);
+                     "");
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -539,16 +548,17 @@ WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootEle
 }
 
 WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element) {
-    std::string script, function, rootArg, link;
+    std::string script, function;
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
     function.assign(isElements? "querySelectorAll":"querySelector");
-    rootArg.assign(strcmp(rootElement, "")?"e":"");
-    link.assign(strcmp(rootElement, "")?".":"");
 
-    script = base::StringPrintf("function (%s) { return %s%sdocument.%s(\"%s\") }",
-                                rootArg.c_str(), rootArg.c_str(), link.c_str(), function.c_str(), query);
+    if (strcmp(rootElement, "")) {
+        script =  base::StringPrintf("function(e) { return e.%s(\"%s\"); }", function.c_str(), query);
+    } else {
+        script =  base::StringPrintf("function() { return document.%s(\"%s\"); }", function.c_str(), query);
+    }
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
                      script.c_str(),

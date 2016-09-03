@@ -28,7 +28,7 @@
 #ifndef WPE_DRIVER_COMMON_H_
 #define WPE_DRIVER_COMMON_H_
 
-#define WD_CMD_MSG_SIZE        100
+#define WD_CMD_MSG_SIZE        512
 #define WD_STATUS_MSG_SIZE     2048
 #define WPE_WD_CMD_KEY         1234
 #define WPE_WD_STATUS_KEY      4321

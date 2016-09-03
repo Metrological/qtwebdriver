@@ -82,10 +82,11 @@ private:
                           const char* jsScript, const char* argList);
     WDStatus ParseJSResponse(const char* response, char* attrib, std::string& attribValue);
 
-    WDStatus FindElementById(const char* rootElement, const char* query, std::string& element);
-    WDStatus FindElementByName(const char* rootElement, const char* query, std::string& element);
+    WDStatus FindElementById(const char* query, std::string& element);
+    WDStatus FindElementByName(const char* query, std::string& element);
+    WDStatus FindElementByNameType(const char* rootElement, const char* type, const char* query, std::string& element);
     WDStatus FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element);
-    WDStatus FindElementByXPath(bool iselements, const char* rootElement, const char* query, std::string& element);
+    WDStatus FindElementByXPath(bool isElements, const char* query, std::string& element);
 	
     void CreateBrowsingContext();
     void CloseBrowsingContext();

@@ -265,17 +265,17 @@ void WpeViewCmdExecutor::GetElementText(const ElementId& element, std::string* e
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
-#define CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg)  \
-do {                                                     \
-    json_object *jObj = json_object_new_object();        \
-    if (strcmp((root_element.id()).c_str(), "")) {       \
-        json_object *jRootElement = json_object_new_string((root_element.id()).c_str()); \
-        json_object_object_add(jObj, "rootElement", jRootElement);   \
-    }                                                                \
+#define CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg)   \
+do {                                                                 \
+    json_object *jObj = json_object_new_object();                    \
     json_object *jLocator = json_object_new_string(locator.c_str()); \
     json_object_object_add(jObj, "locator", jLocator);               \
     json_object *jQuery =  json_object_new_string(query.c_str());    \
     json_object_object_add(jObj, "query", jQuery);                   \
+    if (strcmp((root_element.id()).c_str(), "")) {                   \
+        json_object *jRootElement = json_object_new_string((root_element.id()).c_str()); \
+        json_object_object_add(jObj, "rootElement", jRootElement);   \
+    }                                                                \
     arg.assign(json_object_to_json_string(jObj));                    \
 }while (0)
 
@@ -288,7 +288,7 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
     CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg);
-
+    printf("%s:%s:%d %s \n", __FILE__, __func__, __LINE__, arg.c_str());
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENTS, (void*)&arg,  (void*) &ret);
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
@@ -299,7 +299,7 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
             printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
             for (int i = 0; i < elementSize; ++i) {
                 jIdxObj = json_object_array_get_idx(jObj, i);
-                if (NULL != jObj) {
+                if (NULL != jIdxObj) {
                     if (json_object_object_get_ex(jIdxObj, WPE_SESSION_IDENTIFIER, &jElement)) {
                         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
                         ElementId tmpElement(json_object_get_string(jElement));
@@ -312,6 +312,14 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
         *error = new Error(kNoSuchElement);
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+}
+
+#define GET_ELEMENT_AND_RETURN(jObject, jElem, Elem)                      \
+if (json_object_object_get_ex(jObject, WPE_SESSION_IDENTIFIER, &jElem)) { \
+    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);                  \
+    ElementId elementId(json_object_get_string(jElem));                   \
+    *Elem = elementId;                                                    \
+    return;                                                               \
 }
 
 void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::string& locator,
@@ -327,14 +335,22 @@ void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::s
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENT, (void*)&arg,  (void*) &ret);
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
-        json_object *jElement;
+        json_object *jElement, *jIdxObj;
         json_object *jObj = json_tokener_parse(ret.c_str());
         if (NULL != jObj) {
-            if (json_object_object_get_ex(jObj, WPE_SESSION_IDENTIFIER, &jElement)) {
-                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-                ElementId elementId(json_object_get_string(jElement));
-                *element = elementId;
-                return;
+            enum json_type type = json_object_get_type(jObj);
+            printf("%s:%s:%d type = %d\n",__FILE__, __func__, __LINE__, type);
+            if (json_type_array == type) {
+               int elementSize = json_object_array_length(jObj);
+               printf("%s:%s:%d ElementSize %d \n", __FILE__, __func__, __LINE__, elementSize);
+               for (int i = 0; i < elementSize; ++i) {
+                    jIdxObj = json_object_array_get_idx(jObj, i);
+                    if (NULL != jIdxObj) {
+                        GET_ELEMENT_AND_RETURN(jIdxObj, jElement, element);
+                    }
+                }
+            } else {
+                GET_ELEMENT_AND_RETURN(jObj, jElement, element);
             }
         }
     }
