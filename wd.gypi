@@ -9,12 +9,12 @@
     'WD_CONFIG_PLAYER%': '1',
     'WD_CONFIG_ONE_KEYRELEASE%': '0',
 
-    'QT_BIN_PATH%': '/usr/lib/qt4/bin',
-    'QT_INC_PATH%': '/usr/include',
-    'QT_LIB_PATH%': '/usr/lib',
-    'WPE_BIN_PATH': '${TARGET_DIR}/usr/bin',
-    'WPE_INC_PATH': '${STAGING_DIR}/usr/include/wpe-0.1',
-    'WPE_LIB_PATH': '${TARGET_DIR}/usr/',
+    'QT_BIN_PATH%': '/usr/lib/x86_64-linux-gnu/qt5/bin',
+    'QT_INC_PATH%': '/usr/include/qt5',
+    'QT_LIB_PATH%': '/usr/lib/x86_64-linux-gnu/',
+    'WPE_BIN_PATH': '${WPE_TARGET_DIR}/usr/bin',
+    'WPE_INC_PATH': '${WPE_STAGING_DIR}/usr/include/wpe-0.1',
+    'WPE_LIB_PATH': '${WPE_TARGET_DIR}/usr/',
     'MONGOOSE_INC_PATH%': 'src/third_party/mongoose',
 
     'conditions': [
