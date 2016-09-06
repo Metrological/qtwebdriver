@@ -71,7 +71,7 @@ public:
     WDStatus GetAttribute(const char* reqParams, char* value);
     WDStatus FindElement(bool isElements, const char* reqParams, char* element);
     WDStatus IsUrlSupported(const char* mimeType);
-    void     RemoveView();
+    WDStatus RemoveView();
     static void* RunWpeView(void*);
 
 private:
@@ -80,13 +80,13 @@ private:
                         const char* argList, std::string& command);
     void ExecuteJSCommand(const  char* methodName, const char* handleStr, 
                           const char* jsScript, const char* argList);
-    WDStatus ParseJSResponse(const char* response, char* attrib, std::string& attribValue);
+    WDStatus ParseJSResponse(const char* response, const char* attrib, std::string& attribValue);
 
     WDStatus FindElementById(const char* query, std::string& element);
-    WDStatus FindElementByName(const char* query, std::string& element);
+    WDStatus FindElementByName(const char* rootElement, const char* query, std::string& element);
     WDStatus FindElementByNameType(const char* rootElement, const char* type, const char* query, std::string& element);
     WDStatus FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element);
-    WDStatus FindElementByXPath(bool isElements, const char* query, std::string& element);
+    WDStatus FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element);
 	
     void CreateBrowsingContext();
     void CloseBrowsingContext();

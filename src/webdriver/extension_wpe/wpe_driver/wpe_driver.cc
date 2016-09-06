@@ -37,6 +37,7 @@
 #include <errno.h>
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
+
 void* WpeHandle = NULL;
 
 #define WPE_SEND_COMMAND(cmd, msg)     \
@@ -66,7 +67,6 @@ WPEDriver::WPEDriver()
     : cmdQueueId(0),
       stsQueueId(0),
       WpeDriverThreadId(0) {
-    
 }
 
 WPEDriver::~WPEDriver() {
@@ -246,7 +246,6 @@ int WPEDriver::WpeGetURL(std::string* url) {
     }
     else
         printf("View doesn't exist\n");
-
     return ret;
 }
 
@@ -264,7 +263,6 @@ int WPEDriver::WpeRemoveView() {
     }
     else
         printf("View already removed\n");
-
     return ret;
 }
 

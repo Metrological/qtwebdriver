@@ -41,6 +41,7 @@ enum WPEDriverCommand {
     WPE_WD_GET_ATTRIBUTE
 };
 
+
 class WPEDriver {
 public:
     int cmdQueueId;

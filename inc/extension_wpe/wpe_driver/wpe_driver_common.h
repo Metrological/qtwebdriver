@@ -28,11 +28,12 @@
 #ifndef WPE_DRIVER_COMMON_H_
 #define WPE_DRIVER_COMMON_H_
 
-#define WD_CMD_MSG_SIZE        512
-#define WD_STATUS_MSG_SIZE     2048
-#define WPE_WD_CMD_KEY         1234
-#define WPE_WD_STATUS_KEY      4321
-#define WPE_SESSION_IDENTIFIER "session-node-wpe"
+#define WD_CMD_MSG_SIZE            512
+#define WD_STATUS_MSG_SIZE         2048
+#define WPE_WD_CMD_KEY             1234
+#define WPE_WD_STATUS_KEY          4321
+#define WPE_SESSION_IDENTIFIER     "session-node-wpe"
+#define WD_GET_ATTRIBUTE_MAX_ARGS  2
 
 enum WDStatus {
    WD_NONE,
@@ -67,5 +68,11 @@ struct WDCommandBuf {
 
 const int WD_CMD_SIZE = sizeof(WDCommandBuf);
 const int WD_STATUS_SIZE = sizeof(WDStatusBuf);
+
+// Logger macro to print the file name and line number
+#define S(x) #x
+#define S_(x) S(x)
+#define S__LINE__ S_(__LINE__)
+#define LOCATION (__FILE__ ":" S__LINE__ ": ")
 
 #endif // WPE_DRIVER_COMMON_H_

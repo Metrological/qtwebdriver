@@ -117,14 +117,6 @@ WKViewClientV0 s_viewClient = {
     },
 };
 
-static WKContextInjectedBundleClientV1 _handlerInjectedBundle = {
-    { 1, nullptr },
-    nullptr, // didReceiveMessageFromInjectedBundle
-    // didReceiveSynchronousMessageFromInjectedBundle
-    nullptr,// onDidReceiveSynchronousMessageFromInjectedBundle,
-    nullptr, // getInjectedBundleInitializationUserData
-};
-
 WPEDriverProxy::WPEDriverProxy()
     : WpeViewThreadId_ (0),
       requestID_(1)
@@ -318,7 +310,7 @@ void WPEDriverProxy::ExecuteJSCommand(const char* methodName, const char* handle
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
-WDStatus WPEDriverProxy::ParseJSResponse(const char* response, char* attrib, std::string& attribValue) {
+WDStatus WPEDriverProxy::ParseJSResponse(const char* response, const char* attrib, std::string& attribValue) {
     WDStatus ret = WD_FAILURE;
     json_object *jsObj;
     jsObj = json_tokener_parse(response);
@@ -382,7 +374,7 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
         json_object *jIdxObj;
         int elementSize = json_object_array_length(jObj);
         printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
-        if (2 == elementSize) {
+        if (WD_GET_ATTRIBUTE_MAX_ARGS == elementSize) {
             jIdxObj = json_object_array_get_idx(jObj, 0); //Element Id
             if (jIdxObj) {
                 element.assign(json_object_get_string(jIdxObj));
@@ -391,6 +383,10 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
             if (jIdxObj) {
                 key.assign(json_object_get_string(jIdxObj));
             }
+        }
+        else {
+             printf("%s:%s:%d Wrong Args \n", __FILE__, __func__, __LINE__);
+             return retStatus;
         }
     }
 
@@ -437,7 +433,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     if (!strcmp(locator.c_str(),"id")) {
         retStatus = FindElementById(query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(),"name")) {
-        retStatus = FindElementByName(query.c_str(), tmpResponse);
+        retStatus = FindElementByName(rootElement.c_str(), query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(),"className")) {
         retStatus = FindElementByNameType(rootElement.c_str(), "ClassName", query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(),"tagName")) {
@@ -445,7 +441,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     } else if (!strcmp(locator.c_str(), "css")) {
         retStatus = FindElementByCss(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
     } else if (!strcmp(locator.c_str(), "xpath")) {
-        retStatus = FindElementByXPath(isElements, query.c_str(), tmpResponse);
+        retStatus = FindElementByXPath(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
     } else {
        printf("\n%s:%s:%d Invalid Query Locator: %s \n", __FILE__, __func__, __LINE__, locator.c_str());
     }
@@ -472,17 +468,24 @@ WDStatus WPEDriverProxy::FindElementById(const char* query, std::string& element
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByName(const char* query, std::string& element) {
+WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* query, std::string& element) {
     std::string script;
 
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s\n", __FILE__, __func__, __LINE__, query);
 
-    script =  base::StringPrintf("function() { return document.getElementsByName(\"%s\"); }", query);
+    script = (strcmp(rootElement, "")?
+                  (base::StringPrintf("function(e) { var children, child = [];            \
+                                       children = e.children;                             \
+                                       for (var i = 0, j = 0; i < children.length; ++i) { \
+                                           if (children[i].getAttribute(\"name\") == \"%s\") {\
+                                               child[j++] = children[i];  }              \
+                                        } return child; }", query)):
+                  (base::StringPrintf("function() { return document.getElementsByName(\"%s\"); }", query)));
 
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
-                     script.c_str(), "");
+                     script.c_str(), rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -496,11 +499,8 @@ WDStatus WPEDriverProxy::FindElementByNameType(const char* rootElement, const ch
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s root element = %s \n", __FILE__, __func__, __LINE__, query, rootElement);
 
-    if (strcmp(rootElement, "")) {
-        script =  base::StringPrintf("function(e) { return e.getElementsBy%s(\"%s\"); }", type, query);
-    } else {
-        script =  base::StringPrintf("function() { return document.getElementsBy%s(\"%s\"); }",type, query);
-    }
+    script = (strcmp(rootElement, "")? (base::StringPrintf("function(e) { return e.getElementsBy%s(\"%s\"); }", type, query)):
+                                       (base::StringPrintf("function() { return document.getElementsBy%s(\"%s\"); }",type, query)));
 
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
@@ -513,33 +513,34 @@ WDStatus WPEDriverProxy::FindElementByNameType(const char* rootElement, const ch
     return retStatus;
 }
 
-WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* query, std::string& element) {
-    std::string script;
+WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element) {
+    std::string script, funcStart;
     WDStatus retStatus = WD_FAILURE;
     printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
 
-    if (isElements) {
-        script = base::StringPrintf(
-                "function () { \
-                     var aResult = new Array();\
-                     var a = document.evaluate(\"%s\", document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
-                     for ( var i = 0 ; i < a.snapshotLength ; i++ ) {\
-                          aResult.push(a.snapshotItem(i));\
-                     }\
-                     return aResult;\
-                }", query);
-    }
-    else {
-        script = base::StringPrintf(
-               "function () {\
-                   var elem = document.evaluate(\"%s\", document, null, XPathResult.ANY_TYPE, null ); \
-                   return elem.iterateNext();\
-               }", query);
-    }
+    funcStart = (strcmp(rootElement, "")? (base::StringPrintf("function (e) {\
+                                                               var elem = document.evaluate(\"%s\", e,",
+                                                               query)):
+                                          (base::StringPrintf("function () {\
+                                                               var elem = document.evaluate(\"%s\", document,",
+                                                               query)));
+
+
+    script = (isElements? (base::StringPrintf("%s null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);\
+                                                var aResult = new Array();\
+                                                for ( var i = 0 ; i < elem.snapshotLength ; i++ ) {\
+                                                    aResult.push(elem.snapshotItem(i));\
+                                                }\
+                                                return aResult;\
+                                               }", funcStart.c_str())) :
+                           (base::StringPrintf("%s null, XPathResult.ANY_TYPE, null ); \
+                                                  return elem.iterateNext();\
+                                                 }", funcStart.c_str())));
+
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
                      "browsingContextHandle",
                      script.c_str(),
-                     "");
+                     rootElement);
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
@@ -570,7 +571,7 @@ WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootEleme
     return retStatus;
 }
 
-void WPEDriverProxy::RemoveView() {
+WDStatus WPEDriverProxy::RemoveView() {
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (loop_ != NULL) {
         g_main_loop_quit (loop_);
@@ -581,6 +582,7 @@ void WPEDriverProxy::RemoveView() {
         pthread_join (WpeViewThreadId_, NULL);
         WpeViewThreadId_ = 0;
     }
+    return WD_SUCCESS;
 }
 
 void* WPECommandDispatcherThread(void* pArgs)
@@ -615,7 +617,7 @@ void* WPECommandDispatcherThread(void* pArgs)
                     break;
                 }
                 case WD_REMOVE_VIEW: {
-                    WPEProxy->RemoveView();
+                    stsBuf.status = WPEProxy->RemoveView();
                     break;
                 }
                 case WD_LOAD_URL: {
@@ -663,7 +665,7 @@ void* WPECommandDispatcherThread(void* pArgs)
             if (cmdBuf.command > WD_JS_CMD_START && cmdBuf.command < WD_JS_CMD_END) {
                 printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
             }
-            if (msgsnd (stsQueueId, &stsBuf, WD_STATUS_SIZE, 0/*IPC_NOWAIT*/) < 0)
+            if (msgsnd (stsQueueId, &stsBuf, WD_STATUS_SIZE, 0) < 0)
                  printf("Error in status queue send\n");
             printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
         }

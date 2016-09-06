@@ -58,8 +58,8 @@ WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
     void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
     if (NULL != pWpeView) {
-        session->logger().Log(kFineLogLevel, "Web executor for view("+viewId.id()+")");    
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        session->logger().Log(kFineLogLevel, "Web executor for view("+viewId.id()+")");
+        session->logger().Log(kInfoLogLevel,  LOCATION);
         return new WpeViewCmdExecutor(session, viewId);
     }
     return NULL;
@@ -279,6 +279,35 @@ do {                                                                 \
     arg.assign(json_object_to_json_string(jObj));                    \
 }while (0)
 
+void WpeViewCmdExecutor::ParseElements(const std::string& elementNode, bool isSingleElement, std::vector<ElementId>* elements) {
+    json_object *jElement, *jIdxObj;
+    json_object *jObj = json_tokener_parse(elementNode.c_str());
+    if (NULL != jObj) {
+        enum json_type type = json_object_get_type(jObj);
+        printf("%s:%s:%d type = %d\n",__FILE__, __func__, __LINE__, type);
+        if (json_type_array == type) {
+            int elementSize = (isSingleElement? 1: json_object_array_length(jObj));
+            printf("%s:%s:%d elementSize =%d\n", __FILE__, __func__, __LINE__, elementSize); fflush(stdout);
+            for (int i = 0; i < elementSize; ++i) {
+                jIdxObj = json_object_array_get_idx(jObj, i);
+                if (NULL != jIdxObj) {
+                    if (json_object_object_get_ex(jIdxObj, WPE_SESSION_IDENTIFIER, &jElement)) {
+                        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+                        ElementId tmpElement(json_object_get_string(jElement));
+                        (*elements).push_back(tmpElement);
+                    }
+                }
+            }
+        } else {
+            if (json_object_object_get_ex(jObj, WPE_SESSION_IDENTIFIER, &jElement)) {
+                ElementId tmpElement(json_object_get_string(jElement));
+                (*elements).push_back(tmpElement);
+                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            }
+        }
+    }
+}
+
 void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::string& locator,
                                       const std::string& query, std::vector<ElementId>* elements, Error** error) {
     int retStatus = 0;
@@ -292,34 +321,13 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENTS, (void*)&arg,  (void*) &ret);
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
-        json_object *jElement, *jIdxObj;
-        json_object *jObj = json_tokener_parse(ret.c_str());
-        if (NULL != jObj) {
-            int elementSize = json_object_array_length(jObj);
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
-            for (int i = 0; i < elementSize; ++i) {
-                jIdxObj = json_object_array_get_idx(jObj, i);
-                if (NULL != jIdxObj) {
-                    if (json_object_object_get_ex(jIdxObj, WPE_SESSION_IDENTIFIER, &jElement)) {
-                        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-                        ElementId tmpElement(json_object_get_string(jElement));
-                        (*elements).push_back(tmpElement);
-                    }
-                }
-            }
-        }
-    } else if (NULL == *error)
+        ParseElements(ret, false, elements);
+        return;
+    }
+    if (NULL == *error)
         *error = new Error(kNoSuchElement);
 
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
-}
-
-#define GET_ELEMENT_AND_RETURN(jObject, jElem, Elem)                      \
-if (json_object_object_get_ex(jObject, WPE_SESSION_IDENTIFIER, &jElem)) { \
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);                  \
-    ElementId elementId(json_object_get_string(jElem));                   \
-    *Elem = elementId;                                                    \
-    return;                                                               \
 }
 
 void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::string& locator,
@@ -329,33 +337,19 @@ void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::s
     CHECK(root_element.is_valid());
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
-    ElementId elementId;
     CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg);
 
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENT, (void*)&arg,  (void*) &ret);
     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
-        json_object *jElement, *jIdxObj;
-        json_object *jObj = json_tokener_parse(ret.c_str());
-        if (NULL != jObj) {
-            enum json_type type = json_object_get_type(jObj);
-            printf("%s:%s:%d type = %d\n",__FILE__, __func__, __LINE__, type);
-            if (json_type_array == type) {
-               int elementSize = json_object_array_length(jObj);
-               printf("%s:%s:%d ElementSize %d \n", __FILE__, __func__, __LINE__, elementSize);
-               for (int i = 0; i < elementSize; ++i) {
-                    jIdxObj = json_object_array_get_idx(jObj, i);
-                    if (NULL != jIdxObj) {
-                        GET_ELEMENT_AND_RETURN(jIdxObj, jElement, element);
-                    }
-                }
-            } else {
-                GET_ELEMENT_AND_RETURN(jObj, jElement, element);
-            }
+        std::vector<ElementId> tmpElements;
+        ParseElements(ret, true, &tmpElements);
+        if (!tmpElements.empty())  {
+            *element = tmpElements.front();
+            return;
         }
     }
 
-    *element = elementId;
     if(NULL == *error)
         *error = new Error(kNoSuchElement);
 

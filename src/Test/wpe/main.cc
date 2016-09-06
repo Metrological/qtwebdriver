@@ -19,13 +19,24 @@ void PrintVersion();
 void PrintHelp();
 void InitUInputClient();
 
-
 int main(int argc, char *argv[])
 {
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
     GMainLoop* loop = g_main_loop_new(NULL, FALSE);
     CommandLine cmd_line(CommandLine::NO_PROGRAM);
     cmd_line.InitFromArgv(argc, argv);
+
+    // check if --help CL argument is present
+    if (cmd_line.HasSwitch("help")) {
+        PrintHelp();
+        return 0;
+    }
+
+    // check if --version CL argument is present
+    if (cmd_line.HasSwitch("version")) {
+      PrintVersion();
+      return 0;
+    }
 
     // Create WPE Driver instance
     // WPE Webkit View
@@ -61,7 +72,6 @@ int main(int argc, char *argv[])
     return 0; 
 }
 
-
 void InitUInputClient() {
     // start user input device
     printf("This is %d from %s in %s\n",__LINE__,__func__,__FILE__);
@@ -80,46 +90,40 @@ void PrintVersion() {
 
 void PrintHelp() {
     std::cout << "Usage: WebDriver [--OPTION=VALUE]..."                                             << std::endl
-
-                << "Starts WPEWebDriver server"                                                       << std::endl
-                << ""                                                                                 << std::endl
-                << "OPTION         DEFAULT VALUE      DESCRIPTION"                                    << std::endl
-                << "http-threads   4                  The number of threads to use for handling"      << std::endl
-                << "                                  HTTP requests"                                  << std::endl
-                << "log-path       ./webdriver.log    The path to use for the WPEWebDriver server"    << std::endl
-                << "                                  log"                                            << std::endl
-                << "root           ./web              The path of location to serve files from"       << std::endl
-                << "port           9517               The port that WPEWebDriver listens on"          << std::endl
-                << "silence        false              If true, WPEWebDriver will not log anything"    << std::endl
-                << "                                  to stdout/stderr"                               << std::endl
-                << "verbose        false              If true, WPEWebDriver will log lots of stuff"   << std::endl
-                << "                                  to stdout/stderr"                               << std::endl
-                << "url-base                          The URL path prefix to use for all incoming"    << std::endl
-                << "                                  WebDriver REST requests. A prefix and postfix"  << std::endl
-                << "                                  '/' will automatically be appended if not"      << std::endl
-                << "                                  present"                                        << std::endl
-                << "config                            The path to config file (e.g. config.json) in"  << std::endl
-                << "                                  JSON format with specified WD parameters as"    << std::endl
-                << "                                  described above (port, root, etc.)"             << std::endl
-                << "wi-server      false              If true, web inspector will be enabled"         << std::endl
-                << "wi-port        9222               Web inspector listening port"                   << std::endl
-                << "version                           Print version information to stdout and exit"   << std::endl
-                << "vnc-login      127.0.0.1:5900     VNC server login parameters"                    << std::endl
-                << "                                  format: login:password@ip:port"                 << std::endl
-                << "uinput         false              If option set, user input device"               << std::endl
-                << "                                  will be registered in the system"               << std::endl
-                << "test_data      ./                 Specifies where to look for test specific data" << std::endl
-                << "whitelist                         The path to whitelist file (e.g. whitelist.xml)"<< std::endl
-                << "                                  in XML format with specified list of IP with"   << std::endl
-                << "                                  allowed/denied commands for each of them."      << std::endl
-                << "webserver-cfg                     The path to mongoose config file"               << std::endl
-                << "                                  (e.g. /path/to/config.json) in JSON format with"<< std::endl
-                << "                                  specified mongoose start option"                << std::endl
-                << "                                  (extra-mime-types, listening_ports, etc.)"      << std::endl
-                << "                                  Option from webserver config file will have"    << std::endl
-                << "                                  more priority than commandline param"           << std::endl
-                << "                                  that specify the same option."                  << std::endl;
+              << "Starts WPEWebDriver server"                                                       << std::endl
+              << ""                                                                                 << std::endl
+              << "OPTION         DEFAULT VALUE      DESCRIPTION"                                    << std::endl
+              << "http-threads   4                  The number of threads to use for handling"      << std::endl
+              << "                                  HTTP requests"                                  << std::endl
+              << "log-path       ./webdriver.log    The path to use for the WPEWebDriver server"    << std::endl
+              << "                                  log"                                            << std::endl
+              << "root           ./web              The path of location to serve files from"       << std::endl
+              << "port           9517               The port that WPEWebDriver listens on"          << std::endl
+              << "silence        false              If true, WPEWebDriver will not log anything"    << std::endl
+              << "                                  to stdout/stderr"                               << std::endl
+              << "verbose        false              If true, WPEWebDriver will log lots of stuff"   << std::endl
+              << "                                  to stdout/stderr"                               << std::endl
+              << "url-base                          The URL path prefix to use for all incoming"    << std::endl
+              << "                                  WebDriver REST requests. A prefix and postfix"  << std::endl
+              << "                                  '/' will automatically be appended if not"      << std::endl
+              << "                                  present"                                        << std::endl
+              << "config                            The path to config file (e.g. config.json) in"  << std::endl
+              << "                                  JSON format with specified WD parameters as"    << std::endl
+              << "                                  described above (port, root, etc.)"             << std::endl
+              << "wi-server      false              If true, web inspector will be enabled"         << std::endl
+              << "wi-port        9222               Web inspector listening port"                   << std::endl
+              << "version                           Print version information to stdout and exit"   << std::endl
+              << "                                  format: login:password@ip:port"                 << std::endl
+              << "uinput         false              If option set, user input device"               << std::endl
+              << "                                  will be registered in the system"               << std::endl
+              << "whitelist                         The path to whitelist file (e.g. whitelist.xml)"<< std::endl
+              << "                                  in XML format with specified list of IP with"   << std::endl
+              << "                                  allowed/denied commands for each of them."      << std::endl
+              << "webserver-cfg                     The path to mongoose config file"               << std::endl
+              << "                                  (e.g. /path/to/config.json) in JSON format with"<< std::endl
+              << "                                  specified mongoose start option"                << std::endl
+              << "                                  (extra-mime-types, listening_ports, etc.)"      << std::endl
+              << "                                  Option from webserver config file will have"    << std::endl
+              << "                                  more priority than commandline param"           << std::endl
+              << "                                  that specify the same option."                  << std::endl;
 }
-
-
-

@@ -162,6 +162,7 @@ protected:
     void moveMouseInternal(void* view, int& point);
     
 private:
+    void ParseElements(const std::string& elementNode, bool isSingleElement, std::vector<ElementId>* elements);
     void* view_;
     DISALLOW_COPY_AND_ASSIGN(WpeViewCmdExecutor);
 };
