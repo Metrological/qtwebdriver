@@ -79,7 +79,7 @@
           ],
         } ],
 
-        ['platform == "rpi" and OS == "linux"', {
+        ['platform == "wpe" and OS == "linux"', {
           'dependencies': [
             'wd_ext_wpe.gyp:WebDriver_extension_wpe_base_shared',
             'wd_ext_wpe.gyp:WPE_Proxy',

@@ -71,7 +71,7 @@
        ],
     } ],
 
-    [ 'platform == "rpi"', {
+    [ 'platform == "wpe"', {
        'defines': [
          'WPE_WD_ENABLE',
        ],
