@@ -26,6 +26,7 @@
  */
 
 #include <stdio.h>
+#include "webdriver_session.h"
 #include "extension_wpe/wpe_view_handle.h"
 
 namespace webdriver {
@@ -38,7 +39,7 @@ WpeViewHandle::WpeViewHandle(void* view)
 
 bool WpeViewHandle::equals(const ViewHandle* other) const {
     const WpeViewHandle* toCompare = dynamic_cast<const WpeViewHandle*>(other);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    GlobalLogger::Log(kInfoLogLevel,  LOCATION);
     return ( webkit_view == toCompare->webkit_view);
 }
 

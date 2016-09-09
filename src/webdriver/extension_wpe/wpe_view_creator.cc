@@ -39,7 +39,6 @@ namespace webdriver {
 
 WpeViewCreator::WpeViewCreator()
 {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
 WpeViewCreator::~WpeViewCreator()
@@ -48,27 +47,28 @@ WpeViewCreator::~WpeViewCreator()
 
 bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::string& className,
                                            const Point* position, const Size* size, ViewHandle** view) const {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger.Log(kInfoLogLevel, LOCATION);
     void *WpeHandle;
 
     if (className.empty() || className == "WpeWebView") {  
-        int ret = CreateWpeView(&WpeHandle);
+        int ret = CreateWpeView(&logger, &WpeHandle);
         if (0 != ret) {
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+            logger.Log(kInfoLogLevel, LOCATION);
             // view was not created
             return false;
         }
     
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         *view = new WpeViewHandle((void*) WpeHandle);
+        logger.Log(kInfoLogLevel, LOCATION);
         return true;
     }
+    logger.Log(kInfoLogLevel, LOCATION);
     return false;
 }
 
 bool WpeViewCreator::CreateViewForUrl(const Logger& logger, const std::string& url,
                                           const Point* position, const Size* size, ViewHandle** view) const {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger.Log(kInfoLogLevel, LOCATION);
 
     Error* tmp_err = NULL;
     if (!WpeViewUtil::isUrlSupported(url, &tmp_err )) {

@@ -32,6 +32,7 @@
 #include "base/string_number_conversions.h"
 #include "base/json/json_writer.h"
 #include "webdriver_session.h"
+#include "webdriver_logging.h"
 #include "webdriver_view_factory.h"
 #include "wpe_view_util.h"
 #include "extension_wpe/wpe_view_executor.h"
@@ -39,6 +40,7 @@
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 #include "extension_wpe/uinput_event_dispatcher.h"
 #include "extension_wpe/wpe_key_converter.h"
+
 using namespace std;
 
 namespace webdriver {
@@ -53,77 +55,76 @@ namespace webdriver {
 const ViewType WpeViewCmdExecutorCreator::WPE_VIEW_TYPE = 0x13f6;    
 
 WpeViewCmdExecutorCreator::WpeViewCmdExecutorCreator()
-    : ViewCmdExecutorCreator() { printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); }
+    : ViewCmdExecutorCreator() {
+}
 
 ViewCmdExecutor* WpeViewCmdExecutorCreator::CreateExecutor(Session* session, ViewId viewId) const {
     void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     if (NULL != pWpeView) {
         session->logger().Log(kFineLogLevel, "Web executor for view("+viewId.id()+")");
-        session->logger().Log(kInfoLogLevel,  LOCATION);
+        session->logger().Log(kInfoLogLevel, LOCATION);
         return new WpeViewCmdExecutor(session, viewId);
     }
     return NULL;
 }
 
 bool WpeViewCmdExecutorCreator::CanHandleView(Session* session, ViewId viewId, ViewType* viewType) const {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     void* pWpeView = WpeViewUtil::getWpeView(session, viewId);
     if (NULL != pWpeView) {
         if (NULL != viewType) *viewType = WPE_VIEW_TYPE;  
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
        return true;
     }
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     return false;
 }
 
 std::string WpeViewCmdExecutorCreator::GetViewTypeName() const {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return "html";
 }
 
 WpeViewCmdExecutor::WpeViewCmdExecutor(Session* session, ViewId viewId) 
     : ViewCmdExecutor (session, viewId) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     view_ = ((WpeViewHandle* )WpeViewUtil::getWpeView(session_, viewId))->get();
 }
 
 WpeViewCmdExecutor::~WpeViewCmdExecutor() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
 void* WpeViewCmdExecutor::getElement(const ElementId &element, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     return NULL;
 }
 
 void WpeViewCmdExecutor::SwitchTo(Error** error) {
     CHECK_VIEW_EXISTANCE
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     session_->set_current_view(view_id_);
     session_->logger().Log(kInfoLogLevel, "SwitchTo - set current view ("+view_id_.id()+")");
 }
 
 void WpeViewCmdExecutor::CanHandleUrl(const std::string& url, bool* can, Error **error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     CHECK_VIEW_EXISTANCE
     *can = WpeViewUtil::isUrlSupported(view_, url, error);
 }
 
 void WpeViewCmdExecutor::Reload(Error **error) {
     CHECK_VIEW_EXISTANCE
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     if (!ExecuteCommand(view_, WPE_WD_RELOAD, NULL, NULL)) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        session_->logger().Log(kInfoLogLevel, LOCATION);
     }
     else if(NULL == *error)
         *error = new Error(kUnknownCommand);
 }
 
 void WpeViewCmdExecutor::GetSource(std::string* source, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::SendKeys(const string16& keys, Error** error) {
@@ -131,7 +132,7 @@ void WpeViewCmdExecutor::SendKeys(const string16& keys, Error** error) {
     std::string err_msg;
     std::vector<KeyEvent> key_events;
     int modifiers = session_->get_sticky_modifiers();
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     if (!KeyConverter::ConvertKeysToWebKeyEvents(keys,
                                session_->logger(),
                                false,
@@ -148,59 +149,59 @@ void WpeViewCmdExecutor::SendKeys(const string16& keys, Error** error) {
     while (it != key_events.end()) {
        bool consumed = false;
        consumed = UInputEventDispatcher::getInstance()->dispatch(&(*it), consumed);
-       printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
        ++it;
     }
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementScreenShot(const ElementId& element, std::string* png, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseDoubleClick(Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseButtonUp(Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseButtonDown(Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseClick(MouseButton button, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseWheel(const int delta, Error **error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseMove(const int x_offset, const int y_offset, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseMove(const ElementId& element, int x_offset, const int y_offset, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::MouseMove(const ElementId& element, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::moveMouseInternal(void* view, int& point) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::ClickElement(const ElementId& element, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetAttribute(const ElementId& element, const std::string& key, base::Value** value, Error** error) {
     int retStatus = 0;
     Value *retValue = NULL;
-    printf("%s:%s:%d key = %s \n", __FILE__, __func__, __LINE__, key.c_str());
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
 
@@ -226,43 +227,43 @@ void WpeViewCmdExecutor::GetAttribute(const ElementId& element, const std::strin
     scoped_ptr<Value> ret_value(retValue);
     *value = static_cast<Value*>(ret_value.release());
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::ClearElement(const ElementId& element, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::IsElementDisplayed(const ElementId& element, bool ignore_opacity, bool* is_displayed, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::IsElementEnabled(const ElementId& element, bool* is_enabled, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::ElementEquals(const ElementId& element1, const ElementId& element2, bool* is_equal, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementLocation(const ElementId& element, Point* location, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementLocationInView(const ElementId& element, Point* location, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementTagName(const ElementId& element, std::string* tag_name, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementSize(const ElementId& element, Size* size, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetElementText(const ElementId& element, std::string* element_text, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 #define CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg)   \
@@ -282,17 +283,18 @@ do {                                                                 \
 void WpeViewCmdExecutor::ParseElements(const std::string& elementNode, bool isSingleElement, std::vector<ElementId>* elements) {
     json_object *jElement, *jIdxObj;
     json_object *jObj = json_tokener_parse(elementNode.c_str());
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     if (NULL != jObj) {
         enum json_type type = json_object_get_type(jObj);
-        printf("%s:%s:%d type = %d\n",__FILE__, __func__, __LINE__, type);
+        session_->logger().Log(kInfoLogLevel, LOCATION);
         if (json_type_array == type) {
             int elementSize = (isSingleElement? 1: json_object_array_length(jObj));
-            printf("%s:%s:%d elementSize =%d\n", __FILE__, __func__, __LINE__, elementSize); fflush(stdout);
+            session_->logger().Log(kInfoLogLevel, LOCATION);
             for (int i = 0; i < elementSize; ++i) {
                 jIdxObj = json_object_array_get_idx(jObj, i);
                 if (NULL != jIdxObj) {
                     if (json_object_object_get_ex(jIdxObj, WPE_SESSION_IDENTIFIER, &jElement)) {
-                        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+                        session_->logger().Log(kInfoLogLevel, LOCATION);
                         ElementId tmpElement(json_object_get_string(jElement));
                         (*elements).push_back(tmpElement);
                     }
@@ -302,7 +304,6 @@ void WpeViewCmdExecutor::ParseElements(const std::string& elementNode, bool isSi
             if (json_object_object_get_ex(jObj, WPE_SESSION_IDENTIFIER, &jElement)) {
                 ElementId tmpElement(json_object_get_string(jElement));
                 (*elements).push_back(tmpElement);
-                printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             }
         }
     }
@@ -311,15 +312,13 @@ void WpeViewCmdExecutor::ParseElements(const std::string& elementNode, bool isSi
 void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::string& locator,
                                       const std::string& query, std::vector<ElementId>* elements, Error** error) {
     int retStatus = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 
     CHECK(root_element.is_valid());
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
     CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg);
-    printf("%s:%s:%d %s \n", __FILE__, __func__, __LINE__, arg.c_str());
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENTS, (void*)&arg,  (void*) &ret);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
         ParseElements(ret, false, elements);
         return;
@@ -327,20 +326,20 @@ void WpeViewCmdExecutor::FindElements(const ElementId& root_element, const std::
     if (NULL == *error)
         *error = new Error(kNoSuchElement);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::string& locator,
                                      const std::string& query, ElementId* element, Error** error) {
     int retStatus = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
+
     CHECK(root_element.is_valid());
     CHECK_VIEW_EXISTANCE
     std::string arg, ret;
     CREATE_FIND_ELEMENT_ARGS(rootElement, locator, query, arg);
 
     retStatus = ExecuteCommand(view_, WPE_WD_FIND_ELEMENT, (void*)&arg,  (void*) &ret);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
     if (!retStatus) {
         std::vector<ElementId> tmpElements;
         ParseElements(ret, true, &tmpElements);
@@ -353,53 +352,54 @@ void WpeViewCmdExecutor::FindElement(const ElementId& root_element, const std::s
     if(NULL == *error)
         *error = new Error(kNoSuchElement);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::ActiveElement(ElementId* element, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::NavigateToURL(const std::string& url, bool sync, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     CHECK_VIEW_EXISTANCE
+    session_->logger().Log(kInfoLogLevel, LOCATION);
+ 
     if (!ExecuteCommand(view_, WPE_WD_LOAD_URL, (void*) &url, NULL)) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        session_->logger().Log(kInfoLogLevel, LOCATION);
     }
     else if(NULL == *error)
         *error = new Error(kUnknownCommand);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::GetURL(std::string* url, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     CHECK_VIEW_EXISTANCE
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     if (!ExecuteCommand(view_, WPE_WD_GET_URL, NULL, url)) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-        printf("URL : %s\n", url->c_str());
+        session_->logger().Log(kInfoLogLevel, LOCATION);
     }
     else if(NULL == *error)
         *error = new Error(kUnknownCommand);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::ExecuteScript(const std::string& script, const base::ListValue* const args, base::Value** value, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 void WpeViewCmdExecutor::VisualizerSource(std::string* source, Error** error) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 }
 
 bool WpeViewCmdExecutor::FilterElement(const void* item, const std::string& locator, const std::string& query) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session_->logger().Log(kInfoLogLevel, LOCATION);
     return true;
 }
 
 void WpeViewCmdExecutor::Close(Error** error) {
     CHECK_VIEW_EXISTANCE
+    session_->logger().Log(kInfoLogLevel, LOCATION);
 
     ExecuteCommand(view_, WPE_WD_REMOVE_VIEW, NULL, NULL);
     session_->logger().Log(kInfoLogLevel, "close View("+view_id_.id()+")");

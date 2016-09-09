@@ -36,7 +36,7 @@
 namespace webdriver {
 
 void WpeViewEnumeratorImpl::EnumerateViews(Session* session, std::set<ViewId>* views) const {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     ViewHandlePtr handle(new WpeViewHandle(GetWpeViewHandle()));
     if (handle != NULL) {
         ViewId viewId = session->GetViewForHandle(handle);

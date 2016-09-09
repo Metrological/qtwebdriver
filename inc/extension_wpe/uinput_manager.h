@@ -75,11 +75,10 @@ private:
     int  injectSynEvent();
 
 private:
-    int    _deviceDescriptor;
-    Logger *_logger;
-    bool   _isReady;
-
-    static UInputManager* _instance;
+    int     deviceDescriptor_;
+    bool    isReady_;
+    Logger* logger_;
+    static UInputManager* instance_;
 };
 
 #endif // UINPUT_MANAGER_H

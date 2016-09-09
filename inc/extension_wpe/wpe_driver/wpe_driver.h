@@ -28,7 +28,10 @@
 #define WPE_DRIVER_H_
 #include <string>
 #include <pthread.h>
+#include "webdriver_logging.h"
 #include "extension_wpe/wpe_driver/wpe_driver_common.h"
+
+using namespace webdriver;
 
 enum WPEDriverCommand {
     WPE_WD_LOAD_URL,
@@ -43,6 +46,8 @@ enum WPEDriverCommand {
 
 
 class WPEDriver {
+protected:
+    const Logger* logger;
 public:
     int cmdQueueId;
     int stsQueueId;
@@ -51,6 +56,7 @@ public:
     pthread_t    WpeDriverThreadId;
     
     WPEDriver();
+    WPEDriver(const Logger* logger);
     ~WPEDriver();
 
     int   WpeCreateView();
@@ -68,7 +74,7 @@ public:
     static void* RunWpeProxy(void* arg);
 };
 
-int CreateWpeView(void** handle);
+int CreateWpeView(const Logger* logger, void** handle);
 void* GetWpeViewHandle();
 int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret);
 

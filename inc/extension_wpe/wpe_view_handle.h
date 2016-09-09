@@ -31,6 +31,7 @@
 #include <string>
 
 #include "webdriver_view_id.h"
+#include "extension_wpe/wpe_driver/wpe_driver_common.h"
 
 namespace webdriver {
 

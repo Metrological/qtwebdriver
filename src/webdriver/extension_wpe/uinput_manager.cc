@@ -27,8 +27,10 @@
 
 #include "build/build_config.h"
 
+#include "webdriver_session.h"
 #include "extension_wpe/uinput_manager.h"
 #include "extension_wpe/wpe_key_converter.h"
+#include "extension_wpe/wpe_driver/wpe_driver_common.h"
 
 #include <linux/input.h>
 #include <linux/uinput.h>
@@ -38,48 +40,47 @@
 
 static int lookup_code(int keysym, bool *isShiftRequired);
 
-UInputManager* UInputManager::_instance = NULL;
+UInputManager* UInputManager::instance_ = NULL;
 
 UInputManager* UInputManager::getInstance() {
-    if (NULL == _instance)
-        _instance = new UInputManager();
+    if (NULL == instance_)
+        instance_ = new UInputManager();
 
-    return _instance;
+    return instance_;
 }
 
 UInputManager::UInputManager()
-    : _deviceDescriptor(0),
-      _isReady(false) {
-    _logger = new Logger();
+    : deviceDescriptor_(0),
+      isReady_(false) {
+    logger_ = new Logger();
 }
 
 UInputManager::~UInputManager() {
-    delete _logger;
-    ioctl(_deviceDescriptor, UI_DEV_DESTROY);   // try destroy device
+    delete logger_;
+    ioctl(deviceDescriptor_, UI_DEV_DESTROY);   // try destroy device
 }
 
 bool UInputManager::registerUinputDevice() {
     struct uinput_user_dev uidev;
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    _deviceDescriptor = open("/dev/uinput", O_WRONLY | O_NONBLOCK | O_CREAT | O_NDELAY, S_IREAD | S_IWRITE);
+    logger_->Log(kInfoLogLevel, LOCATION);
+    deviceDescriptor_ = open("/dev/uinput", O_WRONLY | O_NONBLOCK | O_CREAT | O_NDELAY, S_IREAD | S_IWRITE);
 
-    if (0 > _deviceDescriptor) {
-        printf("Can't open uinput device\n");
-        _logger->Log(kWarningLogLevel, "Can't open uinput device");
+    if (0 > deviceDescriptor_) {
+        logger_->Log(kWarningLogLevel, "Can't open uinput device");
         return false;
     }
 
     // enable Key and Synchronization events
-    int ret = ioctl(_deviceDescriptor, UI_SET_EVBIT, EV_KEY);
+    int ret = ioctl(deviceDescriptor_, UI_SET_EVBIT, EV_KEY);
     if (0 > ret) {
-        _logger->Log(kWarningLogLevel, "Can't register uinput key events");
+        logger_->Log(kWarningLogLevel, "Can't register uinput key events");
         return false;
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    ret = ioctl(_deviceDescriptor, UI_SET_EVBIT, EV_SYN);
+
+    ret = ioctl(deviceDescriptor_, UI_SET_EVBIT, EV_SYN);
     if (0 > ret) {
-        _logger->Log(kWarningLogLevel, "Can't register uinput synchronization events");
+        logger_->Log(kWarningLogLevel, "Can't register uinput synchronization events");
         return false;
     }
 
@@ -88,21 +89,21 @@ bool UInputManager::registerUinputDevice() {
     uidev.id.bustype = BUS_USB;
     uidev.id.version = 0x01;
     snprintf(uidev.name, UINPUT_MAX_NAME_SIZE, "wd_key_input");
-    ret = write(_deviceDescriptor, &uidev, sizeof(uidev));
+    ret = write(deviceDescriptor_, &uidev, sizeof(uidev));
 
     if (0 > ret) {
-        _logger->Log(kWarningLogLevel, "Can not initialize user input device");
+        logger_->Log(kWarningLogLevel, "Can not initialize user input device");
         return false;
     }
     registerHandledKeys();
 
-    ret = ioctl(_deviceDescriptor, UI_DEV_CREATE); // create device
+    ret = ioctl(deviceDescriptor_, UI_DEV_CREATE); // create device
     if (0 > ret) {
-        _logger->Log(kWarningLogLevel, "Can not create user input device");
+        logger_->Log(kWarningLogLevel, "Can not create user input device");
         return false;
     }
 
-    _isReady = true;
+    isReady_ = true;
     return true;
 }
 
@@ -119,7 +120,8 @@ int UInputManager::injectKeyEvent(void* event) {
     KeyEvent *keyEvent = (KeyEvent *) event;
     int keyText = keyEvent->text().c_str()[0];
 
-     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(kInfoLogLevel, LOCATION);
+
     // Check keyCode for capital letters
     if ((keyText>='>' && keyText<='Z') ||       // '>','?','@'  included
             (keyText>='!' && keyText<='&') ||   // '!' - '&'
@@ -129,7 +131,7 @@ int UInputManager::injectKeyEvent(void* event) {
             '<' == keyText ) {
         ev.type = EV_KEY;
         ev.code = KEY_RIGHTSHIFT;
-        res = write(_deviceDescriptor, &ev, sizeof(ev));
+        res = write(deviceDescriptor_, &ev, sizeof(ev));
     }
 
     ev.type = EV_KEY;
@@ -137,59 +139,59 @@ int UInputManager::injectKeyEvent(void* event) {
     keyCode = lookup_code(keyEvent->key(), &isShiftRequired);
     if (isShiftRequired) {
         ev.code = KEY_LEFTSHIFT;
-        res = write(_deviceDescriptor, &ev, sizeof(ev));
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        res = write(deviceDescriptor_, &ev, sizeof(ev));
     }
     ev.code = keyCode;
-    res = write(_deviceDescriptor, &ev, sizeof(ev));
+    res = write(deviceDescriptor_, &ev, sizeof(ev));
 
     if (ev.value == KeyEvent::KeyRelease) {
         ev.type = EV_SYN;
         ev.code = SYN_REPORT;
         ev.value = 0;
-        res = write(_deviceDescriptor, &ev, sizeof(ev));
+        res = write(deviceDescriptor_, &ev, sizeof(ev));
     }
 
+    logger_->Log(kInfoLogLevel, LOCATION);
     return res;
 }
 
 void UInputManager::registerHandledKeys() {
     // set range of keys
     for (int i=0; i<256; i++) {
-        ioctl(_deviceDescriptor, UI_SET_KEYBIT, i);
+        ioctl(deviceDescriptor_, UI_SET_KEYBIT, i);
     }
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE000U);   // POWER
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEF00U);   // MENU
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE002U);   // BACK
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE100U);   // UP
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE101U);   // DOWN
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE102U);   // LEFT
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE103U);   // RIGHT
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE001U);   // OK
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE00EU);   // INFO
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE00FU);   // TEXT
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE403U);   // RECOERD
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE402U);   // STOP
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE301U);   // ONE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE302U);   // TWO
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE303U);   // THREE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE304U);   // FOUR
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE305U);   // FIVE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE306U);   // SIX
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE307U);   // SEVEN
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE308U);   // EIGHT
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE309U);   // NINE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xE300U);   // ZERO
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE01U);   // COMPANION_DEVICE_KEY_LIVE_SWIPE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE02U);   // COMPANION_DEVICE_KEY_VOD_SWIPE
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE03U);   // COMPANION_DEVICE_KEY_PAD_UP
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE04U);   // COMPANION_DEVICE_KEY_PAD_DOWN
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE05U);   // COMPANION_DEVICE_KEY_PAD_LEFT
-    ioctl(_deviceDescriptor, UI_SET_KEYBIT, 0xEE06U);   // COMPANION_DEVICE_KEY_PAD_RIGHT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE000U);   // POWER
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEF00U);   // MENU
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE002U);   // BACK
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE100U);   // UP
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE101U);   // DOWN
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE102U);   // LEFT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE103U);   // RIGHT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE001U);   // OK
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE00EU);   // INFO
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE00FU);   // TEXT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE403U);   // RECOERD
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE402U);   // STOP
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE301U);   // ONE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE302U);   // TWO
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE303U);   // THREE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE304U);   // FOUR
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE305U);   // FIVE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE306U);   // SIX
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE307U);   // SEVEN
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE308U);   // EIGHT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE309U);   // NINE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xE300U);   // ZERO
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE01U);   // COMPANION_DEVICE_KEY_LIVE_SWIPE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE02U);   // COMPANION_DEVICE_KEY_VOD_SWIPE
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE03U);   // COMPANION_DEVICE_KEY_PAD_UP
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE04U);   // COMPANION_DEVICE_KEY_PAD_DOWN
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE05U);   // COMPANION_DEVICE_KEY_PAD_LEFT
+    ioctl(deviceDescriptor_, UI_SET_KEYBIT, 0xEE06U);   // COMPANION_DEVICE_KEY_PAD_RIGHT
 }
 
 bool UInputManager::isReady() {
-    return _isReady;
+    return isReady_;
 }
 
 int UInputManager::injectSynEvent() {
@@ -202,7 +204,7 @@ int UInputManager::injectSynEvent() {
     ev.value = 0;
     gettimeofday(&(ev.time), NULL);
 
-    int res = write(_deviceDescriptor, &ev, sizeof(ev));
+    int res = write(deviceDescriptor_, &ev, sizeof(ev));
 
     return res;
 }

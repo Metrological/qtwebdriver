@@ -50,7 +50,6 @@ void* WpeHandle = NULL;
 }
 #define WPE_WAIT_FOR_STATUS(retStatus)  \
 {                       \
-    printf("WPE_WAIT %s:%s:%d\n",__FILE__, __func__, __LINE__); \
     if ((msgrcv(stsQueueId, &stsBuff, WD_STATUS_SIZE, 0, 0) >= 0)) { \
          if (WD_SUCCESS == stsBuff.status)          \
              printf("Command executed successfully %d\n", stsBuff.status); \
@@ -60,87 +59,89 @@ void* WpeHandle = NULL;
              retStatus =  stsBuff.status;               \
          }                                              \
      }                                                  \
-     printf ("Message Receive Status : %s\n", strerror(errno)); \
 }
 
 WPEDriver::WPEDriver() 
-    : cmdQueueId(0),
+    : logger(NULL),
+      cmdQueueId(0),
+      stsQueueId(0),
+      WpeDriverThreadId(0) {
+}
+
+WPEDriver::WPEDriver(const Logger* logger)
+    : logger(logger),
+      cmdQueueId(0),
       stsQueueId(0),
       WpeDriverThreadId(0) {
 }
 
 WPEDriver::~WPEDriver() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 }
 
 void* WPEDriver::RunWpeProxy(void* pArg) {
     int status;
     pid_t wpeProxyPid;
     WPEDriver *wpeDriver = (WPEDriver *) pArg;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    wpeDriver->logger->Log(kInfoLogLevel, LOCATION);
 
     if ((wpeDriver->cmdQueueId = msgget(WPE_WD_CMD_KEY, IPC_CREAT | 0666)) < 0) {
-         printf("Error in message queue creation \n");
+         wpeDriver->logger->Log(kSevereLogLevel, "Error in message queue creation");
          return 0;
     }
     if ((wpeDriver->stsQueueId = msgget(WPE_WD_STATUS_KEY, IPC_CREAT | 0666)) < 0) {
-         printf("Error in message queue creation \n");
+         wpeDriver->logger->Log(kSevereLogLevel, "Error in message queue creation");
          return 0;
     }
 
     wpeProxyPid = fork();
     if (0 == wpeProxyPid) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         prctl(PR_SET_PDEATHSIG, SIGTERM);
         int execStatus = execl ("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", NULL);
         if (execStatus ==-1) {
-            printf ("Error in loading WPEProxy\n");
+            wpeDriver->logger->Log(kSevereLogLevel, "Error in loading WPEProxy");
         }
         return 0;
     } else if (0 > wpeProxyPid) {
-        printf ("Failed start WPEProxy\n");
+        wpeDriver->logger->Log(kSevereLogLevel, "Failed start WPEProxy");
     } else { 
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         waitpid(wpeProxyPid, &status, 0);   
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     msgctl(wpeDriver->cmdQueueId, IPC_RMID, NULL);
     msgctl(wpeDriver->stsQueueId, IPC_RMID, NULL);
 
     wpeDriver->cmdQueueId = wpeDriver->stsQueueId = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    wpeDriver->logger->Log(kInfoLogLevel, LOCATION);
     return 0;
 }
 
 int WPEDriver::WpeCreateView() {
     int ret = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     
     ret = pthread_create(&WpeDriverThreadId, NULL, RunWpeProxy, this);
     if (ret != 0)
-        printf("Can't start RunWpeProxy Thread\n");
+        logger->Log(kSevereLogLevel, "Can't start RunWpeProxy Thread");
 
     do { // Wait till the Queues are created
         if (stsQueueId) {
             //Send message for CreateView
             WPE_SEND_COMMAND (WD_CREATE_VIEW, "")
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             WPE_WAIT_FOR_STATUS(ret);
             break;
         } else {
-            printf("%s:%s:%d Queue is not yet created \n", __FILE__, __func__, __LINE__);
+            logger->Log(kSevereLogLevel, "Queue is not yet created");
             sleep(1);
             // queues not created */
         }
     } while(1);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 bool WPEDriver::WpeIsUrlSupported(const char* mimeType, bool* status) {
     int ret = 0;
     *status = false;
-    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     if (WpeHandle) {
         WPE_SEND_COMMAND(WD_IS_URL_SUPPORTED, mimeType);
         WPE_WAIT_FOR_STATUS(ret);
@@ -148,110 +149,116 @@ bool WPEDriver::WpeIsUrlSupported(const char* mimeType, bool* status) {
             *status = true;
         }
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeLoadURL(const std::string* url) {
     int ret = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     if (WpeHandle) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_LOAD_URL, url->c_str());
         WPE_WAIT_FOR_STATUS(ret);
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
 
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeReload() {
     int ret = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     if (WpeHandle) {
         //Send Reload Command
         WPE_SEND_COMMAND(WD_RELOAD, "");
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         WPE_WAIT_FOR_STATUS(ret);
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
 
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeFindElement(std::string* arg, std::string* output) {
     int ret = 0;
+    logger->Log(kInfoLogLevel, LOCATION);
 
     if (WpeHandle) {
         WPE_SEND_COMMAND(WD_FIND_ELEMENT, arg->c_str());
         WPE_WAIT_FOR_STATUS(ret);
         if (!ret) { //success
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             output->assign(stsBuff.rspMsg);
         }
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeFindElements(std::string* arg, std::string* output) {
     int ret = 0;
+    logger->Log(kInfoLogLevel, LOCATION);
 
     if (WpeHandle) {
         WPE_SEND_COMMAND(WD_FIND_ELEMENTS, arg->c_str());
         WPE_WAIT_FOR_STATUS(ret);
         if (!ret) { //success
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             output->assign(stsBuff.rspMsg);
         }
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeGetAttribute(std::string* arg, std::string* output) {
     int ret = 0;
+    logger->Log(kInfoLogLevel, LOCATION);
 
     if (WpeHandle) {
         WPE_SEND_COMMAND(WD_GET_ATTRIBUTE, arg->c_str());
         WPE_WAIT_FOR_STATUS(ret);
         if (!ret) { //success
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             output->assign(stsBuff.rspMsg);
         }
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeGetURL(std::string* url) {
     int ret = 0;
+    logger->Log(kInfoLogLevel, LOCATION);
     if (WpeHandle) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_GET_URL, "");
         WPE_WAIT_FOR_STATUS(ret);
         if (!ret) { //success
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
             url->assign(stsBuff.rspMsg);
         }
     }
     else
-        printf("View doesn't exist\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 int WPEDriver::WpeRemoveView() {
     int ret = 0;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger->Log(kInfoLogLevel, LOCATION);
     if (WpeHandle) {
         // Send Remove View Command
         WPE_SEND_COMMAND(WD_REMOVE_VIEW, "");
@@ -262,20 +269,25 @@ int WPEDriver::WpeRemoveView() {
         cmdQueueId = stsQueueId = 0;
     }
     else
-        printf("View already removed\n");
+        logger->Log(kSevereLogLevel, "View doesn't exist");
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
-int CreateWpeView(void **handle) {
+int CreateWpeView(const Logger* logger, void **handle) {
     int ret = 0;
-    WPEDriver* WpeDriver = new WPEDriver();
+    logger->Log(kInfoLogLevel, LOCATION);
+
+    WPEDriver* WpeDriver = new WPEDriver(logger);
     ret = WpeDriver->WpeCreateView();
     WpeHandle = *handle = (void*) WpeDriver;
+
+    logger->Log(kInfoLogLevel, LOCATION);
     return ret;
 }
 
 void* GetWpeViewHandle() {
-   printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
    if (WpeHandle)
        return WpeHandle;
    else
@@ -285,57 +297,49 @@ void* GetWpeViewHandle() {
 int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret) {
 
     int retStatus = 0;
-    if (!handle)
+    if (handle)
     {
-        printf ("Invalid handle\n");
-    }
-    WPEDriver* WpeDriver = (WPEDriver*) handle;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        WPEDriver* WpeDriver = (WPEDriver*) handle;
 
-    switch (command) {
-        case WPE_WD_LOAD_URL:{
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-            retStatus = WpeDriver->WpeLoadURL((const std::string*) arg);
-            break;
-        }
-        case WPE_WD_RELOAD:{
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-            retStatus = WpeDriver->WpeReload();
-            break;
-        }
-        case WPE_WD_REMOVE_VIEW: {
-            WpeDriver->WpeRemoveView();
+        switch (command) {
+            case WPE_WD_LOAD_URL:{
+                retStatus = WpeDriver->WpeLoadURL((const std::string*) arg);
+                break;
+            }
+            case WPE_WD_RELOAD:{
+                retStatus = WpeDriver->WpeReload();
+                break;
+            }
+            case WPE_WD_REMOVE_VIEW: {
+                WpeDriver->WpeRemoveView();
              
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-            delete(WPEDriver*)WpeHandle;
-            WpeHandle = NULL;
+                delete(WPEDriver*)WpeHandle;
+                WpeHandle = NULL;
+                break;
+            }
+            case WPE_WD_IS_URL_SUPPORTED: {
+                retStatus = WpeDriver->WpeIsUrlSupported((char *) arg, (bool*) ret);
+                break;
+            }
+            case WPE_WD_GET_URL: {
+                retStatus = WpeDriver->WpeGetURL((std::string*)ret);
+                break;
+            }
+            case WPE_WD_FIND_ELEMENT: {
+                retStatus = WpeDriver->WpeFindElement((std::string*)arg, (std::string*)ret);
+                break;
+            }
+            case WPE_WD_FIND_ELEMENTS: {
+                retStatus = WpeDriver->WpeFindElements((std::string*)arg, (std::string*)ret);
+                break;
+            }
+            case WPE_WD_GET_ATTRIBUTE: {
+                retStatus = WpeDriver->WpeGetAttribute((std::string*)arg, (std::string*)ret);
+                break;
+            }
+            default:
             break;
         }
-        case WPE_WD_IS_URL_SUPPORTED: {
-            printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-            retStatus = WpeDriver->WpeIsUrlSupported((char *) arg, (bool*) ret);
-            break;
-        }
-        case WPE_WD_GET_URL: {
-            retStatus = WpeDriver->WpeGetURL((std::string*)ret);
-            break;
-        }
-        case WPE_WD_FIND_ELEMENT: {
-            retStatus = WpeDriver->WpeFindElement((std::string*)arg, (std::string*)ret);
-            break;
-        }
-        case WPE_WD_FIND_ELEMENTS: {
-            retStatus = WpeDriver->WpeFindElements((std::string*)arg, (std::string*)ret);
-            break;
-        }
-        case WPE_WD_GET_ATTRIBUTE: {
-            retStatus = WpeDriver->WpeGetAttribute((std::string*)arg, (std::string*)ret);
-            break;
-        }
-        default:
-            break;
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-
     return retStatus;
 }

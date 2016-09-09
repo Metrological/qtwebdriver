@@ -49,7 +49,7 @@ bool WpeViewUtil::isUrlSupported(void* pWpeView, const std::string& url, Error 	
     CURL *curl;
     CURLcode res;
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     curl = curl_easy_init();
     if(curl) {
         char *tmpMimeType;
@@ -79,6 +79,7 @@ bool WpeViewUtil::isUrlSupported(void* pWpeView, const std::string& url, Error 	
         ExecuteCommand(pWpeView, WPE_WD_IS_URL_SUPPORTED, (void*) mimeType.c_str(), &isUrlSupported);
     }
 
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     return isUrlSupported;
 }	
 
@@ -88,24 +89,24 @@ bool WpeViewUtil::isUrlSupported(const std::string& url, Error 	**error) {
 
 std::string WpeViewUtil::extractClassName(const std::string& url) {
     const std::string widget_prefix(url_protocol);	
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     return url.substr(widget_prefix.length());
 }
 
 std::string WpeViewUtil::makeUrlByClassName(const std::string& className) {
     const std::string widget_prefix(url_protocol);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     return widget_prefix + className;	
 }
 
 void* WpeViewUtil::getWpeView(Session* session, const ViewId& viewId) {
-
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    session->logger().Log(kInfoLogLevel, LOCATION);
     ViewHandle* viewHandle =  session->GetViewHandle(viewId);
-  
+
     if (NULL == viewHandle) 
         return NULL;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+
+    session->logger().Log(kInfoLogLevel, LOCATION);
     return viewHandle;
 }
 
