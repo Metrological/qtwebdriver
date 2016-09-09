@@ -43,7 +43,7 @@ void* WpeHandle = NULL;
 #define WPE_SEND_COMMAND(cmd, msg)     \
 {                                      \
     cmdBuff.command = cmd;             \
-    strcpy(cmdBuff.message, msg);  \
+    strcpy(cmdBuff.message, msg);      \
     if ((msgsnd(cmdQueueId, &cmdBuff, WD_CMD_SIZE, 0 )) < 0) { \
         printf ("Error in send command %d, Error no: %s\n", cmd, strerror(errno)); \
     }                                               \
@@ -51,9 +51,7 @@ void* WpeHandle = NULL;
 #define WPE_WAIT_FOR_STATUS(retStatus)  \
 {                       \
     if ((msgrcv(stsQueueId, &stsBuff, WD_STATUS_SIZE, 0, 0) >= 0)) { \
-         if (WD_SUCCESS == stsBuff.status)          \
-             printf("Command executed successfully %d\n", stsBuff.status); \
-         else                                           \
+         if (WD_SUCCESS != stsBuff.status)              \
          {                                              \
              printf("Error in command execution %d\n", stsBuff.status); \
              retStatus =  stsBuff.status;               \
