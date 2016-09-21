@@ -46,8 +46,6 @@ enum WPEDriverCommand {
 
 
 class WPEDriver {
-protected:
-    const Logger* logger;
 public:
     int cmdQueueId;
     int stsQueueId;
@@ -56,7 +54,6 @@ public:
     pthread_t    WpeDriverThreadId;
     
     WPEDriver();
-    WPEDriver(const Logger* logger);
     ~WPEDriver();
 
     int   WpeCreateView();
@@ -74,7 +71,7 @@ public:
     static void* RunWpeProxy(void* arg);
 };
 
-int CreateWpeView(const Logger* logger, void** handle);
+int CreateWpeView(void** handle);
 void* GetWpeViewHandle();
 int ExecuteCommand(void* handle, WPEDriverCommand command, void* arg, void* ret);
 

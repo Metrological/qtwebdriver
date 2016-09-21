@@ -51,7 +51,7 @@ bool WpeViewCreator::CreateViewByClassName(const Logger& logger, const std::stri
     void *WpeHandle;
 
     if (className.empty() || className == "WpeWebView") {  
-        int ret = CreateWpeView(&logger, &WpeHandle);
+        int ret = CreateWpeView(&WpeHandle);
         if (0 != ret) {
             logger.Log(kInfoLogLevel, LOCATION);
             // view was not created
