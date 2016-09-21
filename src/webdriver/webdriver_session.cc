@@ -268,7 +268,6 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
         delete this;
         return new Error(kUnknownError, "Cannot start session thread");
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     if (!temp_dir_.CreateUniqueTempDir()) {
         delete this;
@@ -293,12 +292,10 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
 
         if (!CheckRequiredCapabilities(required_capabilities_dict)) {
             logger_.Log(kWarningLogLevel, "Required caps check failed.");
-     printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
            delete this;
             return new Error(kUnknownError, "Required caps check failed.");
         }
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     CapabilitiesParser parser(desired_capabilities_dict, logger_, &capabilities_);
     Error* error = parser.Parse();
@@ -315,7 +312,6 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
 
     if (error)
         Terminate();
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
 
     return error;
 }
