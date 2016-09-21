@@ -77,7 +77,6 @@ private:
 private:
     int     deviceDescriptor_;
     bool    isReady_;
-    Logger* logger_;
     static UInputManager* instance_;
 };
 

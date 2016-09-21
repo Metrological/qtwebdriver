@@ -52,35 +52,33 @@ UInputManager* UInputManager::getInstance() {
 UInputManager::UInputManager()
     : deviceDescriptor_(0),
       isReady_(false) {
-    logger_ = new Logger();
 }
 
 UInputManager::~UInputManager() {
-    delete logger_;
     ioctl(deviceDescriptor_, UI_DEV_DESTROY);   // try destroy device
 }
 
 bool UInputManager::registerUinputDevice() {
     struct uinput_user_dev uidev;
 
-    logger_->Log(kInfoLogLevel, LOCATION);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     deviceDescriptor_ = open("/dev/uinput", O_WRONLY | O_NONBLOCK | O_CREAT | O_NDELAY, S_IREAD | S_IWRITE);
 
     if (0 > deviceDescriptor_) {
-        logger_->Log(kWarningLogLevel, "Can't open uinput device");
+        GlobalLogger::Log(kWarningLogLevel, "Can't open uinput device");
         return false;
     }
 
     // enable Key and Synchronization events
     int ret = ioctl(deviceDescriptor_, UI_SET_EVBIT, EV_KEY);
     if (0 > ret) {
-        logger_->Log(kWarningLogLevel, "Can't register uinput key events");
+        GlobalLogger::Log(kWarningLogLevel, "Can't register uinput key events");
         return false;
     }
 
     ret = ioctl(deviceDescriptor_, UI_SET_EVBIT, EV_SYN);
     if (0 > ret) {
-        logger_->Log(kWarningLogLevel, "Can't register uinput synchronization events");
+        GlobalLogger::Log(kWarningLogLevel, "Can't register uinput synchronization events");
         return false;
     }
 
@@ -92,14 +90,14 @@ bool UInputManager::registerUinputDevice() {
     ret = write(deviceDescriptor_, &uidev, sizeof(uidev));
 
     if (0 > ret) {
-        logger_->Log(kWarningLogLevel, "Can not initialize user input device");
+        GlobalLogger::Log(kWarningLogLevel, "Can not initialize user input device");
         return false;
     }
     registerHandledKeys();
 
     ret = ioctl(deviceDescriptor_, UI_DEV_CREATE); // create device
     if (0 > ret) {
-        logger_->Log(kWarningLogLevel, "Can not create user input device");
+        GlobalLogger::Log(kWarningLogLevel, "Can not create user input device");
         return false;
     }
 
@@ -120,7 +118,7 @@ int UInputManager::injectKeyEvent(void* event) {
     KeyEvent *keyEvent = (KeyEvent *) event;
     int keyText = keyEvent->text().c_str()[0];
 
-    logger_->Log(kInfoLogLevel, LOCATION);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
 
     // Check keyCode for capital letters
     if ((keyText>='>' && keyText<='Z') ||       // '>','?','@'  included
@@ -151,7 +149,7 @@ int UInputManager::injectKeyEvent(void* event) {
         res = write(deviceDescriptor_, &ev, sizeof(ev));
     }
 
-    logger_->Log(kInfoLogLevel, LOCATION);
+    GlobalLogger::Log(kInfoLogLevel, LOCATION);
     return res;
 }
 
