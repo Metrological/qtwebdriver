@@ -52,7 +52,7 @@ bool WpeViewUtil::isUrlSupported(void* pWpeView, const std::string& url, Error 	
     GlobalLogger::Log(kInfoLogLevel, LOCATION);
     curl = curl_easy_init();
     if(curl) {
-        char *tmpMimeType;
+        char *tmpMimeType = NULL;
         FILE *f = fopen("/dev/null", "w+");
         curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
         curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
