@@ -136,6 +136,7 @@ public:
                    const std::string& message) OVERRIDE;
 
     void set_min_log_level(LogLevel level);
+    void get_min_log_level(LogLevel* level);
 
 private:
     static StdOutLog* singleton_;

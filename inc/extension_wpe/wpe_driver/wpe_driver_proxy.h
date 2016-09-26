@@ -28,15 +28,18 @@
 #ifndef WPE_DRIVER_PROXY_H_
 #define WPE_DRIVER_PROXY_H_
 
-#include <WPE/WebKit.h>
-#include <WPE/WebKit/WKCookieManagerSoup.h>
-#include <WPE/WebKit/WKWebAutomation.h>
-
 #include <string>
 #include <cstdio>
 #include <glib.h>
 #include <initializer_list>
 #include <semaphore.h>
+
+#include <WPE/WebKit.h>
+#include <WPE/WebKit/WKCookieManagerSoup.h>
+#include <WPE/WebKit/WKWebAutomation.h>
+#include <extension_wpe/wpe_driver/wpe_logger.h>
+
+using namespace wpedriver;
 
 enum WPEDriverStatus {
     WPE_WD_STOP,
@@ -57,12 +60,14 @@ public:
     pthread_t        WpeViewThreadId_;
     WPEDriverStatus  WDStatus_;
 
+    Logger*          logger_;
     int              requestID_;
     std::string      browsingContext_;
     WKWebAutomationSessionRef webAutomationSession_;
 
     WPEDriverProxy();
     ~WPEDriverProxy();
+    WPEDriverProxy(bool enableConsole);
 
     WDStatus CreateView();
     WDStatus LoadURL(const char* url);

@@ -35,6 +35,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include "webdriver_logging.h"
 #include "extension_wpe/wpe_driver/wpe_driver.h"
 
 
@@ -86,8 +87,17 @@ void* WPEDriver::RunWpeProxy(void* pArg) {
     wpeProxyPid = fork();
     if (0 == wpeProxyPid) {
         prctl(PR_SET_PDEATHSIG, SIGTERM);
-        int execStatus = execl ("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", NULL);
-        if (execStatus ==-1) {
+        LogLevel minLogLevel;
+        StdOutLog* slog = StdOutLog::Get();
+        slog->get_min_log_level(&minLogLevel);
+        int execStatus;
+        if (kAllLogLevel == minLogLevel) {
+            execStatus = execl("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", "verbose", NULL);
+        }
+        else {
+            execStatus = execl("/usr/bin/WPEProxy", "/usr/bin/WPEProxy", NULL);
+        }
+        if (-1 == execStatus) {
             GlobalLogger::Log(kSevereLogLevel, "Error in loading WPEProxy");
         }
         return 0;

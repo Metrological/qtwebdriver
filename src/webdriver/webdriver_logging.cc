@@ -260,6 +260,10 @@ void StdOutLog::set_min_log_level(LogLevel level) {
     min_log_level_ = level;
 }
 
+void StdOutLog::get_min_log_level(LogLevel* level) {
+    *level = min_log_level_;
+}
+
 InMemoryLog::InMemoryLog() { }
 
 InMemoryLog::~InMemoryLog() {  }

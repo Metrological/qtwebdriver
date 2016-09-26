@@ -41,7 +41,6 @@
 #include "base/stringprintf.h"
 
 using std::unique_ptr;
-using namespace webdriver;
 
 /*transfer callback msg to WebDriverProxy */
 std::string respMsg;
@@ -117,21 +116,29 @@ WKViewClientV0 s_viewClient = {
     },
 };
 
+WPEDriverProxy::WPEDriverProxy(bool enableConsole)
+    : WpeViewThreadId_ (0),
+      requestID_(1)
+{
+    logger_ = new wpedriver::Logger(TRACE, enableConsole);
+}
+
 WPEDriverProxy::WPEDriverProxy()
     : WpeViewThreadId_ (0),
       requestID_(1)
 {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_ = new wpedriver::Logger(TRACE, false);
+    logger_->Log(INFO, LOCATION);
 }
 
 WPEDriverProxy::~WPEDriverProxy()
 {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(INFO, LOCATION);
     RemoveView();
+    delete logger_;
 }
 
 static void AutomationCallback(WKStringRef wkRspMsg) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     size_t bufferSize = WKStringGetMaximumUTF8CStringSize(wkRspMsg);
     std::unique_ptr<char> buffer(new char[bufferSize]);
     WKStringGetUTF8CString(wkRspMsg, buffer.get(), bufferSize);
@@ -142,21 +149,20 @@ static void AutomationCallback(WKStringRef wkRspMsg) {
 }
 
 WDStatus WPEDriverProxy::CreateView() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     WDStatus ret = WD_SUCCESS;
     if (0 != (pthread_create(&WpeViewThreadId_, NULL, RunWpeView, this ))) {
-        printf("Can't start RunWpeView Thread\n"); 
+        logger_->Log(ERR, "Can't start RunWpeView Thread");
         ret = WD_FAILURE;
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return ret; 
 }
 
 void* WPEDriverProxy::RunWpeView(void* arg){
 
     WPEDriverProxy *pWpeDriverProxy =  (WPEDriverProxy*) arg;
-
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    pWpeDriverProxy->logger_->Log(TRACE, LOCATION);
     pWpeDriverProxy->loop_ = g_main_loop_new(nullptr, FALSE);
 
     auto contextConfiguration = WKContextConfigurationCreate();
@@ -214,16 +220,16 @@ void* WPEDriverProxy::RunWpeView(void* arg){
     pWpeDriverProxy->page_ = WKViewGetPage(pWpeDriverProxy->view_);
     WKPageSetPageNavigationClient(pWpeDriverProxy->page_, &s_navigationClient.base);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
-    
+    pWpeDriverProxy->logger_->Log(TRACE, LOCATION);
+
     //Create Automation session
     pWpeDriverProxy->webAutomationSession_ = WKWebAutomationSessionCreate(pWpeDriverProxy->context_, pWpeDriverProxy->page_);
     pWpeDriverProxy->CreateBrowsingContext();
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    pWpeDriverProxy->logger_->Log(DEBUG, LOCATION);
     g_main_loop_run(pWpeDriverProxy->loop_);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    pWpeDriverProxy->logger_->Log(TRACE, LOCATION);
     pWpeDriverProxy->CloseBrowsingContext();
     WKRelease(pWpeDriverProxy->webAutomationSession_);
     WKRelease(pWpeDriverProxy->view_);
@@ -236,42 +242,42 @@ void* WPEDriverProxy::RunWpeView(void* arg){
 }
 
 WDStatus WPEDriverProxy::LoadURL(const char* url) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     if (NULL != page_) {
         auto shellURL = WKURLCreateWithUTF8CString(url);
         WKPageLoadURL (page_, shellURL);
         sleep (2);
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return WD_SUCCESS;
 }
 
 WDStatus WPEDriverProxy::Reload() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     if (NULL != page_) {
         WKPageReload (page_);
         sleep (2);
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return WD_SUCCESS;
 }
 
 WDStatus WPEDriverProxy::IsUrlSupported (const char* mimeType) {
     bool isUrlSupported = false;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     if (NULL != page_) {
         isUrlSupported = WKPageCanShowMIMEType(page_, WKStringCreateWithUTF8CString(mimeType));
         if (isUrlSupported){
             return WD_SUCCESS;
         }
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return WD_FAILURE;
 }
 
 void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleStr, const char* jsScript,
                                     const char* argList, std::string& command) {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     json_object *jobj = json_object_new_object();
     json_object *jint = json_object_new_int(requestID_);
     json_object_object_add(jobj, "id", jint);
@@ -281,7 +287,7 @@ void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleSt
     //Create Parameters
     {
         json_object *subObj = json_object_new_object();
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        logger_->Log(INFO, LOCATION);
         if (strcmp (handleStr, "")) {
             json_object *jhandleStr = json_object_new_string(browsingContext_.c_str());
             json_object_object_add(subObj, handleStr, jhandleStr);
@@ -298,16 +304,16 @@ void WPEDriverProxy::CreateJSScript(const char* methodName, const char* handleSt
     }
     
     command.assign(json_object_to_json_string(jobj));
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
 }
 
 void WPEDriverProxy::ExecuteJSCommand(const char* methodName, const char* handleStr,
                                       const char* jsScript, const char* argList) {
     std::string command;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     CreateJSScript(methodName, handleStr, jsScript, argList, command);
     WKWebAutomationExecuteCommand(webAutomationSession_, WKStringCreateWithUTF8CString(command.c_str()), AutomationCallback);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
 }
 
 WDStatus WPEDriverProxy::ParseJSResponse(const char* response, const char* attrib, std::string& attribValue) {
@@ -315,7 +321,7 @@ WDStatus WPEDriverProxy::ParseJSResponse(const char* response, const char* attri
     json_object *jsObj;
     jsObj = json_tokener_parse(response);
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     if (json_object_object_get_ex(jsObj, "result", &jsObj)) {
         if (strcmp (attrib, "")) {
            json_object_object_get_ex(jsObj, attrib, &jsObj);
@@ -324,35 +330,32 @@ WDStatus WPEDriverProxy::ParseJSResponse(const char* response, const char* attri
         }
         if (NULL != jsObj) {
             const char *value = json_object_get_string(jsObj);
-            printf("%s:%s:%d value = %s len = %d\n", __FILE__, __func__, __LINE__, value, strlen(value));
-
             attribValue.assign(value);
             ret = WD_SUCCESS;
         }
     }
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return ret;
 }
 
 void WPEDriverProxy::CreateBrowsingContext() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     ExecuteJSCommand("Automation.createBrowsingContext", "", "", "");
     sem_wait(&jsRespWait);
     ParseJSResponse(respMsg.c_str(), "handle", browsingContext_);
-    printf("Browsing Context = %s\n", browsingContext_.c_str());
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
 }
 
 void WPEDriverProxy::CloseBrowsingContext() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     ExecuteJSCommand("Automation.closeBrowsingContext", "handle", "", "");
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
 }
 
 WDStatus WPEDriverProxy::GetURL(char *url) {
     std::string tmpResponse;
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction", 
                      "browsingContextHandle", 
                      "function() { return document.URL }", 
@@ -360,7 +363,7 @@ WDStatus WPEDriverProxy::GetURL(char *url) {
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", tmpResponse);
     strcpy(url, tmpResponse.c_str());
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
@@ -368,12 +371,12 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
     std::string element, key;
     WDStatus retStatus = WD_FAILURE;
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     json_object *jObj = json_tokener_parse(reqParams);
     if (NULL != jObj) {
         json_object *jIdxObj;
         int elementSize = json_object_array_length(jObj);
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__); fflush(stdout);
+        logger_->Log(DEBUG, LOCATION);
         if (WD_GET_ATTRIBUTE_MAX_ARGS == elementSize) {
             jIdxObj = json_object_array_get_idx(jObj, 0); //Element Id
             if (jIdxObj) {
@@ -385,7 +388,7 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
             }
         }
         else {
-             printf("%s:%s:%d Wrong Args \n", __FILE__, __func__, __LINE__);
+             logger_->Log(WARN, LOCATION);
              return retStatus;
         }
     }
@@ -406,7 +409,7 @@ WDStatus WPEDriverProxy::GetAttribute(const char* reqParams, char* value) {
     if (retStatus == WD_SUCCESS)
         strcpy(value, tmpResponse.c_str());
 
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
@@ -419,7 +422,7 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
 
     if (json_object_object_get_ex(jsObj, "locator", &jsLocator)) {
         locator.assign(json_object_get_string(jsLocator));
-        printf("%s:%s:%d %s \n", __FILE__, __func__, __LINE__, locator.c_str());
+        logger_->Log(DEBUG, LOCATION);
         if (json_object_object_get_ex(jsObj, "query", &jsQuery)) {
             query.assign(json_object_get_string(jsQuery));
             if (json_object_object_get_ex(jsObj, "rootElement", &jsRootElement)) {
@@ -443,11 +446,11 @@ WDStatus WPEDriverProxy::FindElement(bool isElements, const char* reqParams, cha
     } else if (!strcmp(locator.c_str(), "xpath")) {
         retStatus = FindElementByXPath(isElements, rootElement.c_str(), query.c_str(), tmpResponse);
     } else {
-       printf("\n%s:%s:%d Invalid Query Locator: %s \n", __FILE__, __func__, __LINE__, locator.c_str());
+       logger_->Log(WARN, LOCATION);
     }
 
     strcpy(element, tmpResponse.c_str());
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
@@ -455,7 +458,8 @@ WDStatus WPEDriverProxy::FindElementById(const char* query, std::string& element
     std::string script;
 
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
+    logger_->Log(TRACE, LOCATION);
+    logger_->Log(DEBUG, "Query = " , query);
 
     script =  base::StringPrintf("function() { return document.getElementById(\"%s\"); }", query);
     ExecuteJSCommand("Automation.evaluateJavaScriptFunction",
@@ -464,7 +468,7 @@ WDStatus WPEDriverProxy::FindElementById(const char* query, std::string& element
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
@@ -472,7 +476,8 @@ WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* 
     std::string script;
 
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s\n", __FILE__, __func__, __LINE__, query);
+    logger_->Log(TRACE, LOCATION);
+    logger_->Log(DEBUG, "Query = " , query);
 
     script = (strcmp(rootElement, "")?
                   (base::StringPrintf("function(e) { var children, child = [];            \
@@ -489,7 +494,7 @@ WDStatus WPEDriverProxy::FindElementByName(const char* rootElement, const char* 
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
@@ -497,7 +502,8 @@ WDStatus WPEDriverProxy::FindElementByNameType(const char* rootElement, const ch
     std::string script;
 
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s root element = %s \n", __FILE__, __func__, __LINE__, query, rootElement);
+    logger_->Log(TRACE, LOCATION);
+    logger_->Log(DEBUG, "Query = " , query);
 
     script = (strcmp(rootElement, "")? (base::StringPrintf("function(e) { return e.getElementsBy%s(\"%s\"); }", type, query)):
                                        (base::StringPrintf("function() { return document.getElementsBy%s(\"%s\"); }",type, query)));
@@ -509,14 +515,15 @@ WDStatus WPEDriverProxy::FindElementByNameType(const char* rootElement, const ch
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
 WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootElement, const char* query, std::string& element) {
     std::string script, funcStart;
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
+    logger_->Log(TRACE, LOCATION);
+    logger_->Log(DEBUG, "Query = " , query);
 
     funcStart = (strcmp(rootElement, "")? (base::StringPrintf("function (e) {\
                                                                var elem = document.evaluate(\"%s\", e,",
@@ -544,14 +551,15 @@ WDStatus WPEDriverProxy::FindElementByXPath(bool isElements, const char* rootEle
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    logger_->Log(TRACE, LOCATION);
     return retStatus;
 }
 
 WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootElement, const char* query, std::string& element) {
     std::string script, function;
     WDStatus retStatus = WD_FAILURE;
-    printf("%s:%s:%d query = %s \n", __FILE__, __func__, __LINE__, query);
+    logger_->Log(TRACE, LOCATION);
+    logger_->Log(DEBUG, "Query = " , query);
 
     function.assign(isElements? "querySelectorAll":"querySelector");
 
@@ -567,12 +575,10 @@ WDStatus WPEDriverProxy::FindElementByCss(bool isElements, const char* rootEleme
 
     sem_wait(&jsRespWait);
     retStatus = ParseJSResponse(respMsg.c_str(), "result", element);
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     return retStatus;
 }
 
 WDStatus WPEDriverProxy::RemoveView() {
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
     if (loop_ != NULL) {
         g_main_loop_quit (loop_);
         g_main_loop_unref(loop_);
@@ -594,25 +600,25 @@ void* WPECommandDispatcherThread(void* pArgs)
 
     cmdQueueId = stsQueueId = 0;
     WPEDriverProxy* WPEProxy = (WPEDriverProxy*) pArgs;
-    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+    WPEProxy->logger_->Log(TRACE, LOCATION);
     if ((cmdQueueId = msgget(WPE_WD_CMD_KEY, 0666)) < 0) {
-         printf("Error in command queue creation \n");
+         WPEProxy->logger_->Log(ERR, LOCATION);
          return 0;
     }
     if ((stsQueueId = msgget(WPE_WD_STATUS_KEY, 0666)) < 0) {
-         printf("Error in status queue creation \n");
+         WPEProxy->logger_->Log(ERR, LOCATION);
          return 0;
     }
 
     while (WPE_WD_RUN == WPEProxy->WDStatus_) {
-        printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+        WPEProxy->logger_->Log(INFO, LOCATION);
         if (msgrcv (cmdQueueId, &cmdBuf, WD_CMD_SIZE, 0, 0) >= 0) {
-            printf("%s:%s:%d command = %d\n", __FILE__, __func__, __LINE__, cmdBuf.command);
+            WPEProxy->logger_->Log(DEBUG, LOCATION);
             stsBuf.status = WD_FAILURE;
             switch (cmdBuf.command) {
                 case WD_CREATE_VIEW: {
                     stsBuf.status = WPEProxy->CreateView();
-                    printf("%s:%s:%d \n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                     sleep(2);
                     break;
                 }
@@ -629,7 +635,7 @@ void* WPECommandDispatcherThread(void* pArgs)
                     break;
                 }
                 case WD_IS_URL_SUPPORTED: {
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                     stsBuf.status = WPEProxy->IsUrlSupported(cmdBuf.message);
                     break;
                 }
@@ -639,39 +645,36 @@ void* WPECommandDispatcherThread(void* pArgs)
                     break;
                 }
                 case WD_FIND_ELEMENT: {
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                     stsBuf.status = WPEProxy->FindElement(false, cmdBuf.message, stsBuf.rspMsg);
                     break;
                 }
                 case WD_FIND_ELEMENTS: {
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                     stsBuf.status = WPEProxy->FindElement(true, cmdBuf.message, stsBuf.rspMsg);
                     break;
                 }
                 case WD_GET_ATTRIBUTE: {
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                     stsBuf.status = WPEProxy->GetAttribute(cmdBuf.message, stsBuf.rspMsg);
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);fflush(stdout);
                     break;
                 }
                 case WD_JS_CMD_END:
                 case WD_JS_CMD_START:
                 case WD_CMD_NONE: //fall through
-                    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(DEBUG, LOCATION);
                 default:
-                    printf("%s:%s:%d Invalid command\n", __FILE__, __func__, __LINE__);
+                    WPEProxy->logger_->Log(WARN, LOCATION);
                     break;
             }
             if (cmdBuf.command > WD_JS_CMD_START && cmdBuf.command < WD_JS_CMD_END) {
-                printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                WPEProxy->logger_->Log(DEBUG, LOCATION);
             }
             if (msgsnd (stsQueueId, &stsBuf, WD_STATUS_SIZE, 0) < 0)
-                 printf("Error in status queue send\n");
-            printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
+                WPEProxy->logger_->Log(ERR, LOCATION);
         }
     }
 
-    printf("%s:%s:%d\n", __FILE__, __func__, __LINE__);
     msgctl(cmdQueueId, IPC_RMID, NULL);
     msgctl(stsQueueId, IPC_RMID, NULL);
 
@@ -680,10 +683,17 @@ void* WPECommandDispatcherThread(void* pArgs)
 
 int main(int argc, char **argv) {
 
+    bool enableConsoleLog = false;
+
     pthread_t commandThreadId;
     sem_init(&jsRespWait, 0, 0);
+    if (argc >= 2) { //Analyse arguments
+        if (std::string(argv[1]) == "verbose") {
+            enableConsoleLog = true;
+        }
+    }
+    WPEDriverProxy* WPEProxy = new WPEDriverProxy(enableConsoleLog);
 
-    WPEDriverProxy* WPEProxy = new WPEDriverProxy;
     WPEProxy->WDStatus_ = WPE_WD_RUN;
     pthread_create (&commandThreadId, NULL, WPECommandDispatcherThread, WPEProxy);
 
