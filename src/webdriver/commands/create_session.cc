@@ -79,7 +79,7 @@ void CreateSession::ExecutePost(Response* const response) {
 
     if (NULL != required_caps_dict) {
         if (required_caps_dict->GetString(Capabilities::kBrowserStartWindow, &browser_start_window)) {
-            wereRequiredCaps = true;    
+            wereRequiredCaps = true;
             FindAndAttachView(session, browser_start_window, &startView);
         } else if (required_caps_dict->GetString(Capabilities::kBrowserClass, &window_class)) {
             wereRequiredCaps = true;
@@ -94,9 +94,9 @@ void CreateSession::ExecutePost(Response* const response) {
 
         if (!startView.is_valid()) {
             if (desired_caps_dict->GetString(Capabilities::kBrowserClass, &window_class)) {
-               CreateViewByClassName(session, window_class, &startView);
+                CreateViewByClassName(session, window_class, &startView);
             } else {
-              CreateViewByClassName(session, "", &startView);
+                CreateViewByClassName(session, "", &startView);
             }
         }
     }

@@ -120,8 +120,6 @@ bool Session::InitActualCapabilities() {
 }
 
 bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilities_dict) {
-    printf("%s:%s:%d Webkit \n", __FILE__, __func__, __LINE__);
-
     if (!CheckRequiredPlatform(capabilities_dict))
         return false;
 
@@ -176,7 +174,6 @@ bool Session::CheckRequiredCapabilities(const base::DictionaryValue* capabilitie
 bool Session::CheckRequiredBrowser(const base::DictionaryValue* capabilities_dict) {
     std::string required_browser;
     std::string actual_browser;
-    printf("%s:%s:%d Webkit \n", __FILE__, __func__, __LINE__);
 
     if (capabilities_dict->GetString(Capabilities::kBrowserName, &required_browser)) {
         capabilities_.caps->GetString(Capabilities::kBrowserName, &actual_browser);
@@ -292,7 +289,7 @@ Error* Session::Init(const base::DictionaryValue* desired_capabilities_dict,
 
         if (!CheckRequiredCapabilities(required_capabilities_dict)) {
             logger_.Log(kWarningLogLevel, "Required caps check failed.");
-           delete this;
+            delete this;
             return new Error(kUnknownError, "Required caps check failed.");
         }
     }
