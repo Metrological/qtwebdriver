@@ -21,10 +21,8 @@ else
   modes=$mode
 fi
 
-GYP=`which gyp`
-
 #generate wdversion.cc
-python generate_wdversion.py
+$PYTHON generate_wdversion.py
 
 for mode in $modes
 do
@@ -34,7 +32,7 @@ do
   OUTPUT_DIR_OUT=${output_gen}/$platform/$mode/Default
   OUTPUT_BIN_DIR=${output_gen}/bin/$platform/$mode
 
-  python $GYP --depth . -G output_dir=. -D platform=$platform -D mode=$mode -D ROOT_PATH=${base_output_gen} -D WPE_DIR=${wpe_dir} --generator-output=${output_gen}/$platform/$mode wd.gyp
+  $PYTHON $GYP --depth . -G output_dir=. -D platform=$platform -D mode=$mode -D ROOT_PATH=${base_output_gen} -D WPE_DIR=${wpe_dir} --generator-output=${output_gen}/$platform/$mode wd.gyp
   [ $? -ne 0 ] && exit 1
 
 done
