@@ -86,7 +86,7 @@ void* WPEDriver::RunWpeProxy(void* pArg) {
 
     wpeProxyPid = fork();
     if (0 == wpeProxyPid) {
-        prctl(PR_SET_PDEATHSIG, SIGTERM);
+        prctl(PR_SET_PDEATHSIG, SIGHUP);
         LogLevel minLogLevel;
         StdOutLog* slog = StdOutLog::Get();
         slog->get_min_log_level(&minLogLevel);
