@@ -17,7 +17,7 @@
 #include <string>
 #include <vector>
 
-#if !defined(OS_ANDROID) && !defined(OS_NACL)
+#if !defined(OS_ANDROID) && !defined(OS_NACL) && defined(__GLIBC__)
 #include <execinfo.h>
 #endif
 
